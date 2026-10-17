@@ -1,0 +1,3792 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet"
+ href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>J-DET | Jambi Digital Economic Twin</title>
+
+    <style>
+        .region-info {
+    margin-top: 14px;
+    padding: 18px;
+    background: #f0f8f1;
+    border: 1px solid #d5e6d7;
+    border-radius: 18px;
+}
+
+.region-info h3 {
+    margin-top: 0;
+    font-size: 20px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.info-grid div {
+    background: white;
+    padding: 14px;
+    border-radius: 12px;
+}
+
+.info-grid small {
+    display: block;
+    color: #66786e;
+    font-size: 9px;
+    margin-bottom: 5px;
+}
+
+.info-grid strong {
+    font-size: 18px;
+}
+
+.district {
+    cursor: pointer;
+}
+
+.priority-box {
+    margin: 14px 0;
+    padding: 12px 16px;
+    background: #fff7df;
+    border: 1px solid #e4b64f;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 900;
+}
+.map-note {
+    margin: 10px 2px;
+    color: #66786e;
+    font-size: 11px;
+    line-height: 1.6;
+    font-style: italic;
+}
+.simulation-note {
+    margin-top: 12px;
+    padding: 9px 12px;
+    background: #f3f0e7;
+    border-radius: 8px;
+    color: #6b6251;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.priority-1 {
+    background: #ffe8e6;
+    border-color: #df6258;
+    color: #a52f27;
+}
+
+.priority-2 {
+    background: #fff0d9;
+    border-color: #e7a63a;
+    color: #9a6100;
+}
+
+.priority-3 {
+    background: #fff8d9;
+    border-color: #d8b63c;
+    color: #806600;
+}
+
+.priority-4 {
+    background: #e5f5e9;
+    border-color: #087f50;
+    color: #08633f;
+}
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f8f5;
+            color: #173326;
+        }
+
+        /* HEADER */
+        header {
+            background: #0d6b45;
+            color: white;
+            padding: 22px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 25px;
+            font-weight: bold;
+        }
+
+        .logo span {
+            color: #8ee0b5;
+        }
+
+        .status {
+            background: rgba(255,255,255,0.15);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        /* NAVIGATION */
+        nav {
+            background: white;
+            padding: 12px 50px;
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid #dce7e0;
+        }
+
+        nav button {
+            border: none;
+            background: transparent;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #587064;
+            font-weight: bold;
+        }
+
+        
+         nav button:hover {
+         background: #edf5ee;
+         color: #10261d;
+        }
+
+         nav button.active {
+         background: #dff4e8;
+         color: #087044;
+         }
+
+        /* CONTENT */
+        main {
+            max-width: 1400px;
+            margin: auto;
+            padding: 35px 50px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #ffffff, #e2f5e9);
+            padding: 40px;
+            border-radius: 22px;
+            margin-bottom: 22px;
+            border: 1px solid #d7e8de;
+        }
+
+        .hero small {
+            color: #0b8050;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .hero h1 {
+            font-size: 44px;
+            margin: 12px 0;
+        }
+
+        .hero p {
+            max-width: 800px;
+            color: #60736a;
+            line-height: 1.7;
+        }
+
+        /* CARDS */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #dce8e1;
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: 0 8px 25px rgba(20,70,45,0.06);
+        }
+
+        .metric-title {
+            color: #718078;
+            font-size: 13px;
+        }
+
+        .metric-value {
+            font-size: 29px;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+
+        .green {
+            color: #087b4b;
+        }
+
+        /* GRID */
+        .grid {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 18px;
+        }
+
+        /* MAP */
+        .map {
+            height: 430px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 15px;
+            background:
+                linear-gradient(#dceee2 1px, transparent 1px),
+                linear-gradient(90deg, #dceee2 1px, transparent 1px),
+                #edf7f0;
+            background-size: 40px 40px;
+            border: 1px solid #cbded2;
+        }
+
+        .map-title {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: white;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            z-index: 5;
+        }
+
+        .district {
+            position: absolute;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            border: 2px solid rgba(30,80,50,0.3);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .district:hover {
+            transform: scale(1.04);
+        }
+
+        .high {
+            background: rgba(220,85,75,0.65);
+        }
+
+        .medium {
+            background: rgba(235,175,65,0.65);
+        }
+
+        .low {
+            background: rgba(45,165,105,0.55);
+        }
+
+        .d1 {
+            width: 30%;
+            height: 30%;
+            left: 8%;
+            top: 20%;
+        }
+
+        .d2 {
+            width: 32%;
+            height: 32%;
+            left: 37%;
+            top: 12%;
+        }
+
+        .d3 {
+            width: 27%;
+            height: 29%;
+            right: 7%;
+            top: 25%;
+        }
+
+        .d4 {
+            width: 35%;
+            height: 28%;
+            left: 25%;
+            bottom: 8%;
+        }
+
+        .d5 {
+            width: 24%;
+            height: 27%;
+            right: 7%;
+            bottom: 8%;
+        }
+
+        .d6{width:25%;height:24%;left:5%;top:43%;background:rgba(223,98,88,.55)}
+.d7{width:24%;height:25%;right:5%;top:52%;background:rgba(231,166,58,.55)}
+.d8{width:22%;height:22%;left:14%;bottom:6%;background:rgba(231,166,58,.5)}
+.d9{width:22%;height:22%;left:47%;bottom:4%;background:rgba(8,127,80,.5)}
+.d10{width:18%;height:20%;right:27%;top:42%;background:rgba(8,127,80,.55)}
+.d11{width:18%;height:18%;left:39%;top:48%;background:rgba(231,166,58,.5)}
+
+        .legend {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: white;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .dot {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .red {
+            background: #dc554b;
+        }
+
+        .yellow {
+            background: #e9ad3f;
+        }
+
+        .green-dot {
+            background: #32a56b;
+        }
+
+        /* LIST */
+        .priority {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #e6eee9;
+        }
+
+        .priority:last-child {
+            border-bottom: none;
+        }
+
+        .bar {
+            width: 100px;
+            height: 7px;
+            background: #e8efeb;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .bar span {
+            display: block;
+            height: 100%;
+            background: #dc554b;
+            border-radius: 10px;
+        }
+
+        /* SIMULATION */
+        .controls {
+            margin: 20px 0;
+        }
+
+        input[type="range"] {
+            width: 250px;
+            accent-color: #087b4b;
+        }
+
+        .simulation {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .simulation-box {
+            background: #eef8f2;
+            padding: 25px;
+            border-radius: 15px;
+        }
+
+        .big-number {
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        /* FOOTER */
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #718078;
+            font-size: 12px;
+        }
+
+        @media(max-width: 900px) {
+            .metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media(max-width: 600px) {
+            header {
+                padding: 20px;
+            }
+
+            nav {
+                padding: 10px 20px;
+                overflow-x: auto;
+            }
+
+            main {
+                padding: 25px 20px;
+            }
+
+            .hero {
+                padding: 25px;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .metrics {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .simulation {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+/* Panel analisis wilayah J-DET */
+#regionInfo {
+    margin-top: 16px;
+    padding: 24px;
+    background: #e5f5e9;
+    border: 2px solid #087f50;
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(8, 127, 80, 0.16);
+    color: #10261d;
+}
+
+#regionInfo h3 {
+    margin: 0 0 20px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid #e4b64f;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+}
+
+#regionInfo .info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+#regionInfo .info-grid > div {
+    padding: 16px;
+    background: #eef7ef;
+    border: 1px solid #c5dfcd;
+    border-radius: 14px;
+}
+#regionInfo .info-grid > div {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#regionInfo .info-grid > div:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 18px rgba(8, 127, 80, 0.12);
+}
+
+#regionInfo small {
+    display: block;
+    margin-bottom: 10px;
+    color: #66786e;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+}
+
+#regionInfo .info-grid strong {
+    font-size: 22px;
+    font-weight: 900;
+    overflow-wrap: anywhere;
+    letter-spacing: -0.5px;
+}
+
+#regionInfo .risk-value {
+    color: #087f50;
+}
+
+#regionInfo .priority-box {
+    margin: 16px 0;
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-weight: 800;
+}
+
+#regionInfo .priority-1 {
+    background: #fde9e7;
+    color: #a62e27;
+    border-left: 5px solid currentColor;
+}
+
+#regionInfo .priority-2 {
+    background: #fff0d9;
+    color: #8a5100;
+    border-left: 5px solid currentColor;
+}
+
+#regionInfo .priority-3 {
+    background: #fff6d8;
+    color: #765c00;
+    border-left: 5px solid currentColor;
+}
+
+#regionInfo .priority-4 {
+    background: #e1f4e7;
+    color: #08613c;
+    border-left: 5px solid currentColor;
+}
+
+#regionInfo p {
+    line-height: 1.7;
+}
+#regionInfo .recommendation-box {
+    margin: 18px 0;
+    padding: 18px;
+    background: #f0faf3;
+    border: 1px solid #b8dec5;
+    border-left: 5px solid #087f50;
+    border-radius: 14px;
+}
+
+#regionInfo .recommendation-box > b {
+    display: block;
+    margin-bottom: 10px;
+    color: #087f50;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+}
+
+#regionInfo .recommendation-box p {
+    margin: 0;
+    line-height: 1.7;
+}
+
+#regionInfo .simulation-note {
+    padding: 10px 12px;
+    background: #f3f4ef;
+    border-left: 3px solid #e4b64f;
+    border-radius: 6px;
+    color: #66786e;
+    font-size: 12px;
+}
+
+
+/* Grafik analisis risiko J-DET */
+#regionInfo .risk-chart {
+    margin-top: 20px;
+    padding: 18px;
+    background: #ffffff;
+    border: 1px solid #d9e4d8;
+    border-radius: 16px;
+}
+
+#regionInfo .risk-chart h4 {
+    margin: 0 0 16px;
+    color: #10261d;
+    font-size: 15px;
+}
+
+#regionInfo .chart-row {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr) 45px;
+    align-items: center;
+    gap: 10px;
+    margin: 13px 0;
+    font-size: 12px;
+}
+
+#regionInfo .chart-row > span:first-child {
+    cursor: pointer;
+    font-weight: 700;
+    color: #087f50;
+    transition: color 0.2s ease;
+}
+
+#regionInfo .chart-row > span:first-child:hover {
+    color: #a62e27;
+    text-decoration: underline;
+}
+
+#regionInfo .chart-track {
+    height: 10px;
+    overflow: hidden;
+    background: #eaf1eb;
+    border-radius: 99px;
+}
+
+#regionInfo .chart-bar {
+    height: 100%;
+    width: 0;
+    background: #087f50;
+    border-radius: 99px;
+    transition: width 0.4s ease;
+}
+
+#regionInfo .chart-number {
+    text-align: right;
+    font-weight: 800;
+}
+
+@media (max-width: 600px) {
+    #regionInfo .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Tata letak panel informasi J-DET */
+#regionInfo {
+    background: #e6f5e9;
+    border: 1px solid #087f50;
+    border-radius: 16px;
+    padding: 18px;
+    margin-top: 16px;
+    color: #10261d;
+}
+
+#regionInfo h3 {
+    margin-top: 0;
+    font-size: 22px;
+}
+
+#regionInfo hr {
+    border: 0;
+    border-top: 1px solid #cbdccc;
+    margin: 14px 0;
+}
+
+#regionInfo small {
+    color: #66786e;
+    font-weight: 600;
+}
+
+/* Jarak antara panel informasi dan Top 5 Prioritas */
+#regionInfo {
+    margin-bottom: 24px;
+}
+
+.priority {
+    margin-top: 12px;
+}
+
+.section-title {
+    margin-bottom: 18px;
+}
+
+/* ===== J-DET ANALYSIS PANEL: GREEN & GOLD ===== */
+
+#regionInfo {
+    margin-top: 22px;
+    margin-bottom: 28px;
+    padding: 26px;
+    background: linear-gradient(145deg, #ffffff 0%, #f0f8f1 100%);
+    border: 1px solid #c9dfce;
+    border-top: 5px solid #087f50;
+    border-radius: 22px;
+    box-shadow: 0 16px 38px rgba(16, 55, 35, 0.12);
+    color: #10261d;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.25s ease;
+}
+
+#regionInfo:hover {
+    box-shadow: 0 20px 44px rgba(16, 55, 35, 0.16);
+}
+
+#regionInfo h3 {
+    margin: 0 0 20px;
+    padding: 0 0 15px;
+    border-bottom: 2px solid #e4b64f;
+    font-size: clamp(22px, 3vw, 29px);
+    font-weight: 900;
+    letter-spacing: -0.7px;
+    line-height: 1.25;
+}
+
+#regionInfo p {
+    line-height: 1.8;
+    font-size: 14px;
+    color: #42584a;
+    margin: 12px 0;
+}
+
+#regionInfo p b {
+    color: #173e2a;
+    font-weight: 800;
+}
+
+#regionInfo h4 {
+    margin: 22px 0 10px;
+    padding-left: 12px;
+    border-left: 4px solid #e4b64f;
+    color: #087f50;
+    font-size: 16px;
+    font-weight: 900;
+}
+
+#regionInfo .info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+#regionInfo .info-grid > div {
+    padding: 20px 16px;
+    background: #ffffff;
+    border: 1px solid #d4e6d7;
+    border-bottom: 3px solid #b7d7c0;
+    border-radius: 17px;
+    box-shadow: 0 5px 15px rgba(16, 55, 35, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#regionInfo .info-grid > div:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(8, 127, 80, 0.12);
+}
+
+#regionInfo small {
+    display: block;
+    margin-bottom: 10px;
+    color: #687d6e;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+#regionInfo .info-grid strong {
+    display: block;
+    font-size: clamp(20px, 2.5vw, 27px);
+    font-weight: 950;
+    letter-spacing: -0.7px;
+    overflow-wrap: anywhere;
+}
+
+#regionInfo .risk-value {
+    color: #087f50;
+}
+
+#regionInfo .priority-box {
+    margin: 18px 0;
+    padding: 16px 18px;
+    border-radius: 13px;
+    font-weight: 850;
+    line-height: 1.6;
+}
+
+#regionInfo .priority-1 {
+    background: #fff0ee;
+    color: #a62e27;
+    border: 1px solid #f0c5bf;
+    border-left: 5px solid #c94136;
+}
+
+#regionInfo .priority-2 {
+    background: #fff5e5;
+    color: #8a5100;
+    border: 1px solid #f0d6a8;
+    border-left: 5px solid #dc941f;
+}
+
+#regionInfo .priority-3 {
+    background: #fff9df;
+    color: #765c00;
+    border: 1px solid #eee0a0;
+    border-left: 5px solid #d4ad2e;
+}
+
+#regionInfo .priority-4 {
+    background: #eaf7ed;
+    color: #08613c;
+    border: 1px solid #c5e4ce;
+    border-left: 5px solid #087f50;
+}
+
+#regionInfo .recommendation-box {
+    margin: 20px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #edf8ef, #ffffff);
+    border: 1px solid #c9e3cf;
+    border-left: 5px solid #087f50;
+    border-radius: 16px;
+}
+
+#regionInfo .recommendation-box > b {
+    display: block;
+    margin-bottom: 10px;
+    color: #087f50;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+}
+
+#regionInfo .recommendation-box p {
+    margin: 0;
+    line-height: 1.8;
+}
+
+#regionInfo .simulation-note,
+#regionInfo .note {
+    margin-top: 18px;
+    padding: 13px 15px;
+    background: #faf7ec;
+    border: 1px solid #eee2bd;
+    border-left: 4px solid #e4b64f;
+    border-radius: 10px;
+    color: #6d644d;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+#regionInfo .risk-chart {
+    margin-top: 22px;
+    padding: 20px;
+    background: #ffffff;
+    border: 1px solid #d9e7da;
+    border-radius: 18px;
+}
+
+#regionInfo .chart-track {
+    height: 11px;
+    background: #e8f0e9;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+#regionInfo .chart-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #087f50, #72bd87);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+}
+
+@media (max-width: 600px) {
+    #regionInfo {
+        padding: 19px;
+        border-radius: 17px;
+    }
+
+    #regionInfo .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #regionInfo h3 {
+        font-size: 23px;
+    }
+
+    #regionInfo .info-grid > div {
+        padding: 16px;
+    }
+}
+
+/* Mempertegas batas panel analisis J-DET */
+
+
+/* Membuat kartu di dalam panel lebih jelas */
+#regionInfo .info-grid > div {
+    background: #ffffff;
+    border: 1px solid #c4ddca;
+    box-shadow: 0 4px 12px rgba(16, 38, 29, 0.06);
+}
+
+/* Mempertegas kotak rekomendasi */
+#regionInfo .recommendation-box {
+    background: #f0f8f1;
+    border: 1px solid #b8d8c0;
+    border-left: 5px solid #087f50;
+}
+
+/* ===== J-DET ECONOMY PANEL ===== */
+
+#content > section.card {
+    background: linear-gradient(145deg, #ffffff, #f7fbf7);
+    border: 1px solid #d9e8dd;
+    border-radius: 22px;
+    padding: clamp(18px, 3vw, 30px);
+    box-shadow: 0 12px 32px rgba(16, 55, 35, 0.07);
+}
+
+#content h2 {
+    color: #123d2b;
+    font-size: clamp(24px, 3vw, 32px);
+    letter-spacing: -0.7px;
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+#content h3 {
+    color: #14583a;
+    font-size: 19px;
+    margin-top: 0;
+    margin-bottom: 18px;
+}
+
+#content .note {
+    color: #64766b;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+#content select {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #d2e2d7;
+    border-radius: 11px;
+    background: #fbfefb;
+    color: #173b2b;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#content select:focus {
+    border-color: #087f50;
+    box-shadow: 0 0 0 3px rgba(8, 127, 80, 0.12);
+}
+
+#content input[type="range"] {
+    width: 100%;
+    accent-color: #087f50;
+    cursor: pointer;
+}
+
+#content .card .card {
+    background: #ffffff;
+    border: 1px solid #e0ebe3;
+    border-radius: 17px;
+    box-shadow: 0 5px 18px rgba(16, 55, 35, 0.04);
+}
+
+#content .big {
+    color: #087f50;
+    font-size: clamp(28px, 3vw, 36px);
+    font-weight: 850;
+    letter-spacing: -1px;
+    margin: 10px 0;
+}
+
+/* Batang indikator hasil simulasi */
+#content .barline {
+    height: 11px;
+    width: 100%;
+    margin-top: 12px;
+    border-radius: 999px;
+    background: #e8f2eb;
+    overflow: hidden;
+}
+
+#content .barline i {
+    display: block;
+    height: 100%;
+    width: var(--w, 0%);
+    border-radius: inherit;
+    background: linear-gradient(90deg, #087f50, #66c995);
+    transition: width 0.3s ease;
+}
+
+/* Ringkasan rekomendasi */
+#content .list {
+    display: grid;
+    gap: 0;
+}
+
+#content .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 13px 0;
+    border-bottom: 1px solid #e5eee7;
+    line-height: 1.5;
+}
+
+#content .row span {
+    color: #64766b;
+}
+
+#content .row b {
+    color: #173b2b;
+    text-align: right;
+}
+
+#econAction {
+    padding: 15px 17px;
+    border-left: 4px solid #087f50;
+    border-radius: 8px;
+    background: #edf7ef;
+    color: #18563a;
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1.7;
+}
+
+@media (max-width: 600px) {
+    #content > section.card {
+        padding: 17px;
+        border-radius: 17px;
+    }
+
+    #content .card .card {
+        padding: 16px;
+    }
+}
+
+/* J-DET: perapian Simulasi Kebijakan */
+
+#content .sim {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 18px;
+    align-items: stretch;
+}
+
+#content .sim .scenario {
+    min-width: 0;
+    padding: 22px;
+    border: 1px solid #d9e8dd;
+    border-radius: 18px;
+    background: linear-gradient(145deg, #ffffff, #f1f8f2);
+    box-shadow: 0 8px 24px rgba(16, 55, 35, 0.05);
+}
+
+#content .sim .scenario strong {
+    display: block;
+    color: #355c47;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+#content .sim .scenario .big {
+    color: #087f50;
+    font-size: clamp(30px, 3vw, 38px);
+    font-weight: 850;
+    margin: 12px 0;
+}
+
+#content .sim .scenario .barline {
+    height: 12px;
+    background: #e5f0e8;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 14px;
+}
+
+#content .sim .scenario .barline i {
+    display: block;
+    height: 100%;
+    width: var(--w, 0%);
+    border-radius: inherit;
+    background: linear-gradient(90deg, #087f50, #66c995);
+    transition: width 0.3s ease;
+}
+
+#content #policyAction {
+    padding: 16px 18px;
+    border-left: 4px solid #087f50;
+    border-radius: 10px;
+    background: #edf7ef;
+    color: #18563a;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+@media (max-width: 600px) {
+    #content .sim {
+        grid-template-columns: 1fr;
+    }
+
+    #content .sim .scenario {
+        padding: 18px;
+    }
+}
+
+    .hotspot-month-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+    align-items: end;
+}
+
+@media (max-width: 560px) {
+    .hotspot-month-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+    }
+}
+    
+    </style>
+    
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<body>
+
+<header>
+    <div class="logo">
+        J<span>-DET</span>
+    </div>
+    
+
+    <div class="status">
+        ● Prototype · Data Simulasi
+    </div>
+</header>
+
+
+<nav>
+    <button class="active" onclick="switchTab(this, showDashboard)">Dashboard</button>
+    <button onclick="switchTab(this, showRisk)">Peta Risiko</button>
+    <button onclick="switchTab(this, showEconomy)">Dampak Ekonomi</button>
+    <button onclick="switchTab(this, showPolicy)">Simulasi Kebijakan</button>
+</nav>
+
+<main id="content">
+
+    <!-- HERO -->
+    <section class="hero">
+
+        <small>GDAYS UI · LENSA GEO</small>
+
+        <h1>
+            Jambi Digital<br>
+            Economic Twin
+        </h1>
+
+        <p>
+            Platform simulasi geospasial yang mengintegrasikan
+            risiko kebakaran, kondisi lahan, cuaca, dan aktivitas
+            ekonomi untuk membantu menentukan wilayah yang perlu
+            diprioritaskan sebelum kebakaran berkembang menjadi krisis.
+        </p>
+
+    </section>
+
+    <!-- METRICS -->
+    
+<section class="metrics">
+
+    <div class="card">
+        <div class="metric-title">Risiko rata-rata</div>
+        <div class="metric-value">57%</div>
+        <div class="green">Rata-rata simulasi 11 wilayah</div>
+    </div>
+
+    <div class="card">
+        <div class="metric-title">Wilayah prioritas</div>
+        <div class="metric-value">5</div>
+        <div class="green">Risiko dasar ≥60 dari 11 wilayah</div>
+    </div>
+
+    <div class="card">
+        <div class="metric-title">Potensi dampak</div>
+        <div class="metric-value">Rp 70,9 M</div>
+        <div class="green">Total nilai dampak simulasi</div>
+    </div>
+
+    <div class="card">
+        <div class="metric-title">Akurasi model</div>
+        <div class="metric-value" style="font-size:24px;">Belum diuji</div>
+        <div class="green">Validasi belum dilakukan</div>
+    </div>
+
+</section>
+
+<div class="card" style="margin-top:12px;">
+    <strong>Bagaimana membaca skor risiko J-DET?</strong>
+    <p class="note">
+        Rata-rata skor risiko simulasi dihitung dari 11 kabupaten/kota
+        dengan menjumlahkan seluruh skor, lalu membaginya dengan
+        jumlah wilayah. Nilai ini merupakan indeks demonstrasi
+        berskala 0–100, bukan probabilitas kebakaran dan belum
+        mewakili hasil pengukuran risiko aktual Provinsi Jambi.
+    </p>
+</div>
+
+
+
+    <!-- MAP + PRIORITY -->
+    <section class="grid">
+
+        <div class="card">
+
+            <div class="section-title">
+                Peta Prioritas Intervensi
+            </div>
+
+            <div class="map">
+
+                <div class="map-title">
+                    Jambi · Risk Map
+                </div>
+ 
+<div id="jambiMap" style="width:100%; height:100%; position:absolute; inset:0;"></div>
+
+                <div class="legend">
+                    <span class="dot red"></span> Tinggi
+                    &nbsp;&nbsp;
+                    <span class="dot yellow"></span> Sedang
+                    &nbsp;&nbsp;
+                    <span class="dot green-dot"></span> Rendah
+                </div>
+
+            </div>
+
+<p class="map-note">
+    Catatan: Peta ini merupakan visualisasi skematis untuk demonstrasi
+    konsep J-DET, bukan batas administratif GIS yang akurat.
+</p>
+
+
+
+        </div>
+
+        <div class="card">
+
+            
+<div id="regionInfo" class="region-info">
+    <h3>Pilih wilayah pada peta</h3>
+    <p>Klik salah satu wilayah pada peta untuk melihat analisis J-DET.</p>
+</div>
+
+            
+<div class="section-title">
+    Top 5 Prioritas
+</div>
+
+
+<p class="note">
+    Peringkat berdasarkan skor risiko simulasi tertinggi.
+    Daftar ini menunjukkan wilayah yang perlu dikaji lebih dahulu
+    untuk pencegahan kebakaran, bukan otomatis wilayah dengan
+    dampak ekonomi terbesar. Jenis intervensi perlu ditentukan
+    berdasarkan kondisi wilayah dan ketersediaan data.
+</p>
+
+
+<div class="priority">
+    <span>1. Tanjab Barat — 92%</span>
+    <div class="bar">
+        <span style="width:92%"></span>
+    </div>
+</div>
+
+<div class="priority">
+    <span>2. Muaro Jambi — 81%</span>
+    <div class="bar">
+        <span style="width:81%"></span>
+    </div>
+</div>
+
+<div class="priority">
+    <span>3. Tanjab Timur — 76%</span>
+    <div class="bar">
+        <span style="width:76%"></span>
+    </div>
+</div>
+
+<div class="priority">
+    <span>4. Tebo — 67%</span>
+    <div class="bar">
+        <span style="width:67%"></span>
+    </div>
+</div>
+
+<div class="priority">
+    <span>5. Sarolangun — 63%</span>
+    <div class="bar">
+        <span style="width:63%"></span>
+    </div>
+</div>
+
+
+<div class="section-title" style="margin-top:28px;">
+    Top 5 Deteksi Hotspot · 2025
+</div>
+
+<p class="note">
+    Peringkat berdasarkan jumlah catatan deteksi satelit
+    VIIRS S-NPP yang berada dalam batas wilayah Jambi.
+    Peringkat ini berbeda dari prioritas berdasarkan skor
+    risiko simulasi.
+</p>
+
+
+
+<div id="hotspotRankingStatus" class="note">
+    Menyiapkan data hotspot NASA FIRMS...
+</div>
+
+<div id="hotspotRankingRows" class="list"></div>
+
+
+        </div>
+
+    </section>
+
+    <!-- SIMULATION -->
+    <section class="card" style="margin-top:20px">
+
+        <div class="section-title">
+            Simulasi Tingkat Risiko
+        </div>
+
+        <p>
+            Geser indikator untuk melihat perubahan
+            estimasi dampak ekonomi.
+        </p>
+
+        <div class="controls">
+
+            <input
+                type="range"
+                id="riskSlider"
+                min="10"
+                max="100"
+                value="65"
+            >
+
+            <strong id="riskValue">65%</strong>
+
+        </div>
+
+        <div class="simulation">
+
+            <div class="simulation-box">
+                <div>Produksi terdampak</div>
+
+                <div class="big-number" id="production">
+                    Rp 18,4 M
+                </div>
+            </div>
+
+            <div class="simulation-box">
+                <div>Pendapatan berisiko</div>
+
+                <div class="big-number" id="income">
+                    Rp 11,7 M
+                </div>
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+<footer>
+    J-DET · Jambi Digital Economic Twin<br>
+    Prototype untuk demonstrasi LENSA GEO · Data simulasi
+</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+
+    const slider = document.getElementById("riskSlider");
+
+    slider.addEventListener("input", function() {
+
+        let risk = Number(this.value);
+
+        document.getElementById("riskValue").innerText =
+            risk + "%";
+
+        let production = (risk * 0.283).toFixed(1);
+
+        let income = (risk * 0.18).toFixed(1);
+
+        document.getElementById("production").innerText =
+            "Rp " + production + " M";
+
+        document.getElementById("income").innerText =
+            "Rp " + income + " M";
+
+    });
+
+    
+function showDashboard() {
+    location.reload();
+}
+
+
+const SKOR_RISIKO_JDET = {
+    "Tanjab Barat": 92,
+    "Muaro Jambi": 81,
+    "Tanjab Timur": 76,
+    "Batanghari": 59,
+    "Kota Jambi": 21,
+    "Kerinci": 47,
+    "Merangin": 54,
+    "Sarolangun": 63,
+    "Tebo": 67,
+    "Bungo": 51,
+    "Kota Sungai Penuh": 18
+};
+function showRisk() {
+    const content = document.getElementById("content");
+  
+
+const wilayah = [
+    {
+        nama: "Tanjung Jabung Barat",
+        risiko: SKOR_RISIKO_JDET["Tanjab Barat"],
+        posisi: "top:15%;left:8%"
+    },
+    {
+        nama: "Muaro Jambi",
+        risiko: SKOR_RISIKO_JDET["Muaro Jambi"],
+        posisi: "top:20%;left:40%"
+    },
+    {
+        nama: "Tanjung Jabung Timur",
+        risiko: SKOR_RISIKO_JDET["Tanjab Timur"],
+        posisi: "top:35%;left:67%"
+    },
+    {
+        nama: "Batanghari",
+        risiko: SKOR_RISIKO_JDET["Batanghari"],
+        posisi: "top:55%;left:30%"
+    },
+    {
+        nama: "Sarolangun",
+        risiko: SKOR_RISIKO_JDET["Sarolangun"],
+        posisi: "top:68%;left:10%"
+    },
+    {
+        nama: "Kota Jambi",
+        risiko: SKOR_RISIKO_JDET["Kota Jambi"],
+        posisi: "top:48%;left:48%"
+    },
+    {
+        nama: "Merangin",
+        risiko: SKOR_RISIKO_JDET["Merangin"],
+        posisi: "top:42%;left:10%"
+    },
+    {
+        nama: "Bungo",
+        risiko: SKOR_RISIKO_JDET["Bungo"],
+        posisi: "top:60%;left:65%"
+    },
+    {
+        nama: "Tebo",
+        risiko: SKOR_RISIKO_JDET["Tebo"],
+        posisi: "top:35%;left:35%"
+    },
+    {
+        nama: "Kerinci",
+        risiko: SKOR_RISIKO_JDET["Kerinci"],
+        posisi: "top:78%;left:35%"
+    },
+    {
+        nama: "Kota Sungai Penuh",
+        risiko: SKOR_RISIKO_JDET["Kota Sungai Penuh"],
+        posisi: "top:80%;left:65%"
+    }
+];
+
+
+
+    content.innerHTML = `
+        <section class="card">
+            <h2>Peta Risiko Kebakaran J-DET</h2>
+            
+<div style="margin:16px 0;">
+    <label for="dimensiRisiko"
+        style="display:block;font-weight:700;margin-bottom:8px;">
+        Jenis analisis
+    </label>
+
+    <select id="dimensiRisiko"
+        style="width:100%;padding:12px;border:1px solid #d9e4d8;border-radius:10px;">
+        <option value="gabungan">Risiko kebakaran gabungan</option>
+        <option value="cuaca">Kondisi cuaca</option>
+        <option value="lahan">Kerentanan kondisi lahan</option>
+        <option value="ekonomi">Paparan ekonomi dan pangan</option>
+    </select>
+</div>
+
+<p id="infoDimensiRisiko" class="note">
+    Skor risiko gabungan menggunakan data simulasi untuk demonstrasi
+    dan belum mewakili pengukuran risiko aktual.
+</p>
+
+
+<div class="card" style="margin:14px 0;padding:16px;background:#f8fbf8;">
+    <h3 style="margin-top:0;">Bagaimana prioritas ditentukan?</h3>
+
+    <p class="note">
+        Kategori berikut menunjukkan tindakan awal berdasarkan skor
+        risiko simulasi. Skor yang lebih tinggi menunjukkan prioritas
+        pengkajian yang lebih tinggi dalam prototipe ini.
+    </p>
+
+    <div style="display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+        gap:10px;margin-top:14px;">
+
+        <div style="padding:12px;border-radius:10px;
+            background:#fff0ef;border:1px solid #f0c5c1;">
+            <b style="color:#c7463e;">80–100</b>
+            <p style="margin:6px 0 0;">Prioritas 1</p>
+            <span class="note">Intervensi segera</span>
+        </div>
+
+        <div style="padding:12px;border-radius:10px;
+            background:#fff6e7;border:1px solid #f0dfb7;">
+            <b style="color:#9b690c;">60–79</b>
+            <p style="margin:6px 0 0;">Prioritas 2</p>
+            <span class="note">Intervensi tinggi</span>
+        </div>
+
+        <div style="padding:12px;border-radius:10px;
+            background:#fffbe8;border:1px solid #eee1a6;">
+            <b style="color:#8a7110;">40–59</b>
+            <p style="margin:6px 0 0;">Prioritas 3</p>
+            <span class="note">Pemantauan</span>
+        </div>
+
+        <div style="padding:12px;border-radius:10px;
+            background:#edf7ef;border:1px solid #c8e3cf;">
+            <b style="color:#087f50;">0–39</b>
+            <p style="margin:6px 0 0;">Prioritas 4</p>
+            <span class="note">Kesiapsiagaan</span>
+        </div>
+    </div>
+
+    <p class="note" style="margin-top:12px;">
+        Catatan: skor masih berupa simulasi. Penentuan tindakan nyata
+        perlu mempertimbangkan hotspot, cuaca, kondisi lahan, paparan
+        ekonomi, dan ketersediaan data yang tervalidasi.
+    </p>
+</div>
+
+
+
+            
+        <input id="cariWilayah"
+            type="text"
+            placeholder="🔍 Cari kabupaten atau kota..."
+            style="width:100%;padding:12px;margin:10px 0;
+            border:1px solid #d9e4d8;border-radius:10px;">
+
+            
+<div class="card" style="margin:14px 0;padding:16px;background:#f8fbf8;">
+    <h3 style="margin-top:0;">Ringkasan Hotspot NASA FIRMS · 2025</h3>
+
+    <div style="display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+        gap:14px;margin:14px 0;">
+
+        <div>
+            <small>Total catatan deteksi</small>
+            <strong id="hotspotTotal"
+                style="display:block;font-size:25px;color:#087f50;">—</strong>
+        </div>
+
+        <div>
+            <small>Wilayah dengan deteksi terbanyak</small>
+            <strong id="hotspotTopRegion"
+                style="display:block;font-size:17px;color:#087f50;">—</strong>
+        </div>
+
+        <div>
+            <small>Bulan dengan deteksi terbanyak</small>
+            <strong id="hotspotPeakMonth"
+                style="display:block;font-size:17px;color:#087f50;">—</strong>
+        </div>
+    </div>
+
+    
+    <div id="hotspotMonthlyChart" style="margin:18px 0;"></div>
+
+    
+    <p id="hotspotStatus" class="note">
+        Ringkasan akan ditampilkan setelah data CSV berhasil dimuat.
+    </p>
+
+    <p class="note">
+        Sumber: arsip NASA FIRMS, VIIRS S-NPP, 2025.
+        Catatan deteksi satelit bukan jumlah kejadian kebakaran yang terkonfirmasi.
+    </p>
+</div>
+
+            <div id="petaRisiko"
+            style="height:480px;width:100%;position:relative;
+            overflow:hidden;margin:15px 0;
+            background:#e1efe3;border:1px solid #b7cdbd;
+            border-radius:16px;">
+        </div>
+        
+            <div id="regionInfo" class="region-info">
+            <h3>Pilih wilayah pada peta</h3>
+            <p>Klik salah satu wilayah untuk melihat analisis J-DET.</p>
+            </div>
+
+            <h3>Daftar Risiko Wilayah</h3>
+            <div id="daftarWilayah"></div>
+
+            <p class="note">
+                Data dan posisi wilayah merupakan simulasi prototype,
+                bukan peta geografis akurat.
+            </p>
+        </section>
+    `;
+
+    
+    // Membaca CSV hotspot NASA FIRMS untuk Jambi
+    fetch("./JDET_hotspot_Jambi_2025.csv")
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("File CSV hotspot tidak ditemukan.");
+            }
+            return response.text();
+        })
+        .then(csvText => {
+            const baris = csvText.trim().split(/\r?\n/);
+
+            if (baris.length < 2) {
+                throw new Error("File CSV tidak memiliki data.");
+            }
+
+            // Membaca baris CSV dengan dukungan tanda kutip
+            function parseCSVLine(line) {
+                const hasil = [];
+                let nilai = "";
+                let dalamKutip = false;
+
+                for (let i = 0; i < line.length; i++) {
+                    const karakter = line[i];
+
+                    if (karakter === '"') {
+                        if (dalamKutip && line[i + 1] === '"') {
+                            nilai += '"';
+                            i++;
+                        } else {
+                            dalamKutip = !dalamKutip;
+                        }
+                    } else if (karakter === "," && !dalamKutip) {
+                        hasil.push(nilai);
+                        nilai = "";
+                    } else {
+                        nilai += karakter;
+                    }
+                }
+
+                hasil.push(nilai);
+                return hasil;
+            }
+
+            const header = parseCSVLine(baris.shift())
+                .map(kolom => kolom.trim());
+
+            const kolomWilayah = header.indexOf("kabupaten_kota");
+            const kolomTanggal = header.indexOf("acq_date");
+
+            if (kolomWilayah === -1 || kolomTanggal === -1) {
+                throw new Error(
+                    "Kolom kabupaten_kota atau acq_date tidak ditemukan."
+                );
+            }
+
+            const wilayah = {};
+            const bulanan = {};
+            let total = 0;
+
+            baris.forEach(teks => {
+                if (!teks.trim()) return;
+
+                const kolom = parseCSVLine(teks);
+                const nama = kolom[kolomWilayah]?.trim();
+                const tanggal = kolom[kolomTanggal]?.trim();
+
+                if (!nama || !tanggal) return;
+
+                total++;
+                wilayah[nama] = (wilayah[nama] || 0) + 1;
+
+                const bulan = tanggal.slice(0, 7);
+                bulanan[bulan] = (bulanan[bulan] || 0) + 1;
+            });
+
+            
+            window.JDET_HOTSPOT_WILAYAH_2025 = wilayah;
+
+            
+            const teratas = Object.entries(wilayah)
+                .sort((a, b) => b[1] - a[1])[0];
+
+            const puncak = Object.entries(bulanan)
+                .sort((a, b) => b[1] - a[1])[0];
+
+            const namaBulan = [
+                "Januari", "Februari", "Maret", "April",
+                "Mei", "Juni", "Juli", "Agustus",
+                "September", "Oktober", "November", "Desember"
+            ];
+
+            
+const dataGrafik = namaBulan.map((label, i) => {
+    const key = `2025-${String(i + 1).padStart(2, "0")}`;
+
+    return {
+        label,
+        jumlah: bulanan[key] || 0
+    };
+});
+
+const nilaiMaksimum = Math.max(
+    1,
+    ...dataGrafik.map(item => item.jumlah)
+);
+
+const elemenGrafik = document.getElementById("hotspotMonthlyChart");
+
+if (elemenGrafik) {
+    elemenGrafik.innerHTML = `
+        <h4 style="margin-bottom:6px;">
+            Tren Bulanan Deteksi Hotspot · 2025
+        </h4>
+
+        <p class="note">
+            Panjang batang menunjukkan jumlah catatan deteksi
+            relatif terhadap bulan dengan jumlah tertinggi.
+        </p>
+
+        ${dataGrafik.map(item => {
+            const persentase =
+                (item.jumlah / nilaiMaksimum) * 100;
+
+            const bulanPuncak =
+                item.jumlah === nilaiMaksimum &&
+                item.jumlah > 0;
+
+            return `
+                <div style="
+                    display:grid;
+                    grid-template-columns:80px minmax(0,1fr) 48px;
+                    align-items:center;
+                    gap:10px;
+                    margin:11px 0;">
+
+                    <span style="font-size:12px;">
+                        ${item.label}
+                    </span>
+
+                    <div style="
+                        height:12px;
+                        background:#e8f2eb;
+                        border-radius:99px;
+                        overflow:hidden;">
+
+                        <div style="
+                            width:${persentase}%;
+                            height:100%;
+                            border-radius:99px;
+                            background:${bulanPuncak ? "#df6258" : "#087f50"};">
+                        </div>
+                    </div>
+
+                    <b style="font-size:12px;text-align:right;">
+                        ${item.jumlah.toLocaleString("id-ID")}
+                    </b>
+                </div>
+            `;
+        }).join("")}
+
+        <p class="note" style="margin-top:14px;">
+            Sumber: arsip NASA FIRMS, VIIRS S-NPP, 2025.
+            Deteksi satelit merupakan anomali termal dan bukan
+            otomatis kejadian kebakaran terkonfirmasi.
+        </p>
+    `;
+}
+
+
+            document.getElementById("hotspotTotal").textContent =
+                total.toLocaleString("id-ID");
+
+            document.getElementById("hotspotTopRegion").textContent =
+                teratas
+                    ? `${teratas[0]} (${teratas[1].toLocaleString("id-ID")})`
+                    : "Belum tersedia";
+
+            document.getElementById("hotspotPeakMonth").textContent =
+                puncak
+                    ? `${namaBulan[Number(puncak[0].slice(5, 7)) - 1]} (${puncak[1].toLocaleString("id-ID")})`
+                    : "Belum tersedia";
+
+            document.getElementById("hotspotStatus").textContent =
+                "Berhasil membaca arsip deteksi hotspot VIIRS S-NPP " +
+                "tahun 2025 untuk Provinsi Jambi. " +
+                "Jumlah ini merupakan catatan deteksi, bukan " +
+                "jumlah kejadian kebakaran terkonfirmasi.";
+        })
+        .catch(error => {
+            console.error("Kesalahan membaca CSV hotspot:", error);
+
+            const status = document.getElementById("hotspotStatus");
+            if (status) {
+                status.textContent =
+                    "Data hotspot belum berhasil dimuat: " +
+                    error.message +
+                    " Pastikan file CSV berada di folder yang sama " +
+                    "dan website dibuka melalui server lokal.";
+            }
+        });
+
+    
+    if (typeof L === "undefined") {
+        document.getElementById("petaRisiko").textContent =
+            "Leaflet belum berhasil dimuat. Periksa koneksi internet.";
+    } else {
+        const peta = L.map("petaRisiko");
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OpenStreetMap"
+        }).addTo(peta);
+
+        fetch("./jambi.geojson")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("File jambi.geojson tidak ditemukan.");
+                }
+                return response.json();
+            })
+            .then(geojson => {
+                const batasWilayah = L.geoJSON(geojson, {
+                    style: {
+                        color: "#087f50",
+                        weight: 2,
+                        fillColor: "#8ed3a5",
+                        fillOpacity: 0.45
+                    },
+                    
+            onEachFeature: (feature, layer) => {
+                const props = feature.properties || {};
+
+                const nama =
+                    props.NAME_2 ||
+                    props.WADMKK ||
+                    props.NAMOBJ ||
+                    props.NAME ||
+                    props.name ||
+                    "Wilayah Jambi";
+
+                layer.bindTooltip(nama);
+
+                
+                layer.on("click", () => {
+    layer.bindPopup(
+        "<b>" + nama + "</b><br>Analisis wilayah tersedia di panel J-DET."
+    ).openPopup();
+
+    if (typeof showRegion === "function") {
+        showRegion(nama);
+    } else {
+        console.warn("Fungsi showRegion belum ditemukan.");
+    }
+ });
+
+        }
+
+                }).addTo(peta);
+
+                if (batasWilayah.getLayers().length > 0) {
+                    peta.fitBounds(batasWilayah.getBounds());
+                } else {
+                    throw new Error("GeoJSON tidak berisi wilayah.");
+                }
+
+                setTimeout(() => peta.invalidateSize(), 200);
+            })
+            .catch(error => {
+                console.error("Kesalahan peta:", error);
+                document.getElementById("petaRisiko").innerHTML =
+                    "Peta gagal dimuat: " + error.message;
+            });
+    }
+
+
+    
+ const pencarian = document.getElementById("cariWilayah");
+ const daftar = document.getElementById("daftarWilayah");
+
+ function tampilkanWilayah() {
+    const kata = pencarian.value.trim().toLowerCase();
+
+    const hasil = wilayah.filter(item =>
+        item.nama.toLowerCase().includes(kata)
+    );
+
+    if (hasil.length === 0) {
+        daftar.innerHTML = "<p>Wilayah tidak ditemukan.</p>";
+        return;
+    }
+
+    daftar.innerHTML = hasil.map(item => `
+        <div style="padding:12px 0;
+            border-bottom:1px solid #d9e4d8;">
+            <strong>${item.nama}</strong>
+            <span style="float:right">${item.risiko}%</span>
+
+            <div style="height:8px;background:#eef7ef;
+                border-radius:8px;margin-top:8px;overflow:hidden;">
+                <div style="height:100%;width:${item.risiko}%;
+                    background:${item.risiko >= 80 ? '#df6258' :
+                    item.risiko >= 50 ? '#e7a63a' : '#087f50'};">
+                </div>
+            </div>
+        </div>
+    `).join("");
+}
+
+pencarian.addEventListener("input", tampilkanWilayah);
+tampilkanWilayah();
+
+const dimensi = document.getElementById("dimensiRisiko");
+const infoDimensi = document.getElementById("infoDimensiRisiko");
+
+const keteranganDimensi = {
+    gabungan:
+        "Skor risiko gabungan saat ini menggunakan data simulasi " +
+        "untuk demonstrasi, bukan hasil pengukuran aktual.",
+
+    cuaca:
+        "Analisis cuaca akan mempertimbangkan curah hujan, suhu, " +
+        "dan kelembapan apabila data aktual telah diintegrasikan. " +
+        "Data cuaca aktual belum tersedia dalam perhitungan ini.",
+
+    lahan:
+        "Analisis lahan dirancang untuk mempertimbangkan jenis tanah, " +
+        "tutupan lahan, dan kondisi gambut jika relevan. " +
+        "Data kondisi lahan aktual belum terintegrasi.",
+
+    ekonomi:
+        "Analisis ini diarahkan untuk mengkaji paparan produksi " +
+        "pertanian, pendapatan, dan aktivitas ekonomi. " +
+        "Nilai saat ini masih berupa simulasi."
+};
+
+function perbaruiKeteranganDimensi() {
+    infoDimensi.textContent =
+        keteranganDimensi[dimensi.value] ||
+        "Pilih jenis analisis untuk melihat keterangannya.";
+}
+
+dimensi.addEventListener("change", perbaruiKeteranganDimensi);
+perbaruiKeteranganDimensi();
+
+
+}    
+function showEconomy() {
+    const content = document.getElementById("content");
+
+    // DATA SIMULASI: mengikuti data dasar showRegion().
+    const risikoDasar = {
+        "Tanjung Jabung Barat": 92,
+        "Muaro Jambi": 81,
+        "Tanjung Jabung Timur": 76,
+        "Batanghari": 59,
+        "Kota Jambi": 21,
+        "Kerinci": 47,
+        "Merangin": 54,
+        "Sarolangun": 63,
+        "Tebo": 67,
+        "Bungo": 51,
+        "Kota Sungai Penuh": 18
+    };
+
+    const dampakEkonomiDasar = {
+    "Tanjung Jabung Barat": 12.4,
+    "Muaro Jambi": 9.8,
+    "Tanjung Jabung Timur": 8.7,
+    "Batanghari": 6.2,
+    "Kota Jambi": 2.1,
+    "Kerinci": 4.8,
+    "Merangin": 5.6,
+    "Sarolangun": 6.9,
+    "Tebo": 7.4,
+    "Bungo": 5.3,
+    "Kota Sungai Penuh": 1.7
+};
+
+    content.innerHTML = `
+        <section class="card">
+            <h2>Analisis Dampak Ekonomi J-DET</h2>
+            <p class="note">
+                Simulasikan paparan produksi dan pendapatan
+                berdasarkan wilayah, sektor, dan skenario risiko.
+            </p>
+
+            <div style="display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+                gap:16px;margin-top:20px;">
+
+                <div class="card">
+                    <label for="econRegion"><b>Wilayah</b></label>
+                    <select id="econRegion"
+                        style="display:block;width:100%;margin-top:8px;">
+                        <option>Tanjung Jabung Barat</option>
+                        <option>Muaro Jambi</option>
+                        <option>Tanjung Jabung Timur</option>
+                        <option>Batanghari</option>
+                        <option>Kota Jambi</option>
+                        <option>Kerinci</option>
+                        <option>Merangin</option>
+                        <option>Sarolangun</option>
+                        <option>Tebo</option>
+                        <option>Bungo</option>
+                        <option>Kota Sungai Penuh</option>
+                    </select>
+
+                    <label for="econSector"
+                        style="display:block;margin-top:18px;">
+                        <b>Sektor ekonomi</b>
+                    </label>
+                    <select id="econSector"
+                        style="display:block;width:100%;margin-top:8px;">
+                        <option>Perkebunan</option>
+                        <option>Pertanian</option>
+                        <option>Jasa & perdagangan</option>
+                    </select>
+
+                    <label for="econSeverity"
+                        style="display:block;margin-top:22px;">
+                        <b>Indeks skenario risiko</b>
+                    </label>
+                    <input id="econSeverity" type="range"
+                        min="10" max="100" value="65"
+                        style="width:100%;margin-top:12px;">
+                    <p id="econSeverityText" class="note">65/100</p>
+                </div>
+
+                <div class="card">
+                    <h3>Hasil Simulasi</h3>
+
+                    <p class="note">Indeks paparan produksi</p>
+                    <div class="big">
+                        <span id="econProduction">76</span>/100
+                    </div>
+                    <div class="barline">
+                        <i id="econProductionBar" style="--w:76%"></i>
+                    </div>
+
+                    <p class="note" style="margin-top:20px;">
+                        Indeks pendapatan berisiko
+                    </p>
+                    <div class="big">
+                        <span id="econIncome">58</span>/100
+                    </div>
+                    <div class="barline">
+                        <i id="econIncomeBar" style="--w:58%"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:16px;">
+                <h3>Rekomendasi J-DET</h3>
+                <div class="list">
+                    <div class="row">
+                        <span>Wilayah</span>
+                        <b id="econRegionLabel">Tanjung Jabung Barat</b>
+                    </div>
+                    <div class="row">
+                        <span>Deteksi hotspot 2025</span>
+                        <b id="policyHotspot">Memuat data...</b>
+                    </div>
+                    <div class="row">
+                        <span>Sektor</span>
+                        <b id="econSectorLabel">Perkebunan</b>
+                    </div>
+                    <div class="row">
+                        <span>Risiko dasar</span>
+                        <b id="econBaseRisk">92/100</b>
+                    </div>
+                    <div class="row">
+                        <span>Deteksi hotspot 2025</span>
+                        <b id="econHotspot">Memuat data...</b>
+                    </div>
+                    <div class="row">
+                        <span>Indeks hotspot relatif</span>
+                        <b id="econHotspotIndex">Data belum tersedia</b>
+                    </div>
+                    <div class="row">
+                        <span>Tingkat skenario</span>
+                        <b id="econLevel">Sedang</b>
+                    </div>
+                </div>
+                <p id="econAction" style="margin-top:12px;">
+                    Prioritaskan pencegahan dini.
+                </p>
+            </div>
+
+            <p class="note" style="margin-top:16px;">
+                DATA SIMULASI — indeks dan pembobotan ini hanya untuk
+                demonstrasi prototipe, bukan hasil pengukuran aktual.
+                Angka tidak menunjukkan kerugian dalam rupiah.
+            </p>
+        </section>
+    `;
+
+    const region = document.getElementById("econRegion");
+    const sector = document.getElementById("econSector");
+    const severity = document.getElementById("econSeverity");
+
+    function updateEconomy() {
+        const namaWilayah = region.value;
+        const namaSektor = sector.value;
+        const skenario = Number(severity.value);
+        const dasar = risikoDasar[namaWilayah];
+
+        const dataHotspot = window.JDET_HOTSPOT_WILAYAH_2025;
+
+function normalisasiNamaEkonomi(nama) {
+    const bersih = String(nama || "")
+        .toLowerCase()
+        .trim()
+        .replace(/^(kabupaten|kab\.|kota)\s+/i, "");
+
+    const alias = {
+        "tanjab barat": "tanjung jabung barat",
+        "tanjung jabung b": "tanjung jabung barat",
+        "tanjab timur": "tanjung jabung timur",
+        "tanjung jabung t": "tanjung jabung timur",
+        "batang hari": "batanghari",
+        "jambi": "kota jambi",
+        "sungai penuh": "kota sungai penuh"
+    };
+
+    return alias[bersih] || bersih;
+}
+
+let jumlahHotspotEkonomi = null;
+
+if (dataHotspot) {
+    const target = normalisasiNamaEkonomi(namaWilayah);
+
+    const cocok = Object.entries(dataHotspot).find(
+        ([nama]) => normalisasiNamaEkonomi(nama) === target
+    );
+
+    if (cocok) {
+        jumlahHotspotEkonomi = Number(cocok[1]);
+    }
+}
+
+const elemenHotspot = document.getElementById("econHotspot");
+
+if (elemenHotspot) {
+    elemenHotspot.textContent =
+        jumlahHotspotEkonomi === null
+            ? "Data belum tersedia"
+            : jumlahHotspotEkonomi.toLocaleString("id-ID") +
+              " catatan";
+}
+
+const elemenIndeksHotspot =
+    document.getElementById("econHotspotIndex");
+
+const maksimumHotspotEkonomi = dataHotspot
+    ? Math.max(0, ...Object.values(dataHotspot).map(Number))
+    : 0;
+
+const indeksHotspotEkonomi =
+    jumlahHotspotEkonomi === null || maksimumHotspotEkonomi === 0
+        ? null
+        : Math.round(
+            jumlahHotspotEkonomi / maksimumHotspotEkonomi * 100
+        );
+
+if (elemenIndeksHotspot) {
+    elemenIndeksHotspot.textContent =
+        indeksHotspotEkonomi === null
+            ? "Data belum tersedia"
+            : indeksHotspotEkonomi + "%";
+}
+
+        const faktorProduksi = {
+            "Perkebunan": 1,
+            "Pertanian": 0.94,
+            "Jasa & perdagangan": 0.72
+        };
+
+        const faktorPendapatan = {
+            "Perkebunan": 0.80,
+            "Pertanian": 0.76,
+            "Jasa & perdagangan": 0.62
+        };
+
+        const gabungan = dasar * 0.6 + skenario * 0.4;
+
+        const produksi = Math.round(
+            Math.min(100, gabungan * faktorProduksi[namaSektor])
+        );
+
+        const pendapatan = Math.round(
+            Math.min(100, produksi * faktorPendapatan[namaSektor])
+        );
+
+        document.getElementById("econSeverityText").textContent =
+            skenario + "/100";
+
+        document.getElementById("econProduction").textContent =
+            produksi;
+
+        document.getElementById("econIncome").textContent =
+            pendapatan;
+
+        document.getElementById("econProductionBar")
+            .style.setProperty("--w", produksi + "%");
+
+        document.getElementById("econIncomeBar")
+            .style.setProperty("--w", pendapatan + "%");
+
+        document.getElementById("econRegionLabel").textContent =
+            namaWilayah;
+
+        document.getElementById("econSectorLabel").textContent =
+            namaSektor;
+
+        document.getElementById("econBaseRisk").textContent =
+            dasar + "/100";
+
+        document.getElementById("econLevel").textContent =
+            skenario >= 75 ? "Tinggi" :
+            skenario >= 45 ? "Sedang" : "Rendah";
+
+        document.getElementById("econAction").textContent =
+            produksi >= 70
+                ? "Prioritaskan perlindungan wilayah dan pencegahan dini."
+                : produksi >= 45
+                    ? "Perkuat pemantauan lahan dan kesiapsiagaan."
+                    : "Pertahankan pemantauan dan kesiapsiagaan.";
+    }
+
+    region.addEventListener("change", updateEconomy);
+    sector.addEventListener("change", updateEconomy);
+    severity.addEventListener("input", updateEconomy);
+
+    updateEconomy();
+
+        fetch("./JDET_hotspot_Jambi_2025.csv")
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("CSV hotspot gagal dimuat.");
+            }
+            return response.text();
+        })
+        .then(teks => {
+            const baris = teks
+                .replace(/^\uFEFF/, "")
+                .trim()
+                .split(/\r?\n/);
+
+            const header = parseHotspotCSVRow(baris.shift())
+                .map(nama => nama.trim());
+
+            const indeksWilayah = header.indexOf("kabupaten_kota");
+
+            if (indeksWilayah < 0) {
+                throw new Error("Kolom kabupaten_kota tidak ditemukan.");
+            }
+
+            const hitung = {};
+
+            for (const barisData of baris) {
+                if (!barisData.trim()) continue;
+
+                const kolom = parseHotspotCSVRow(barisData);
+                const nama = (kolom[indeksWilayah] || "").trim();
+
+                if (nama) {
+                    hitung[nama] = (hitung[nama] || 0) + 1;
+                }
+            }
+
+            hitung["Kota Sungai Penuh"] = hitung["Kota Sungai Penuh"] || 0;
+
+            window.JDET_HOTSPOT_WILAYAH_2025 = hitung;
+            updateEconomy();
+        })
+        .catch(error => {
+            console.error("Gagal memuat hotspot:", error);
+            const elemen = document.getElementById("econHotspot");
+
+            if (elemen) {
+                elemen.textContent = "Gagal memuat data";
+            }
+        });
+}
+
+
+    
+function showPolicy() {
+    const content = document.getElementById("content");
+
+    const risikoDasar = {
+        "Tanjung Jabung Barat": 92,
+        "Muaro Jambi": 81,
+        "Tanjung Jabung Timur": 76,
+        "Batanghari": 59,
+        "Kota Jambi": 21,
+        "Kerinci": 47,
+        "Merangin": 54,
+        "Sarolangun": 63,
+        "Tebo": 67,
+        "Bungo": 51,
+        "Kota Sungai Penuh": 18
+    };
+
+        const dampakEkonomiDasar = {
+        "Tanjung Jabung Barat": 12.4,
+        "Muaro Jambi": 9.8,
+        "Tanjung Jabung Timur": 8.7,
+        "Batanghari": 6.2,
+        "Kota Jambi": 2.1,
+        "Kerinci": 4.8,
+        "Merangin": 5.6,
+        "Sarolangun": 6.9,
+        "Tebo": 7.4,
+        "Bungo": 5.3,
+        "Kota Sungai Penuh": 1.7
+    };
+
+    content.innerHTML = `
+        <section class="card">
+            <h2>Simulasi Kebijakan J-DET</h2>
+            <p class="note">
+                Bandingkan skenario penanganan risiko karhutla
+                untuk membantu menentukan prioritas intervensi.
+            </p>
+
+            <div class="card" style="margin-top:18px;">
+                <label for="policyRegion"><b>Pilih wilayah</b></label>
+                <select id="policyRegion"
+                    style="display:block;width:100%;margin-top:8px;">
+                    ${Object.keys(risikoDasar).map(nama =>
+                        `<option value="${nama}">${nama}</option>`
+                    ).join("")}
+                </select>
+
+                <label for="policyScenario"
+                    style="display:block;margin-top:18px;">
+                    <b>Skenario intervensi</b>
+                </label>
+                <select id="policyScenario"
+                    style="display:block;width:100%;margin-top:8px;">
+                    <option value="15">Patroli dan pencegahan dini</option>
+                    <option value="20">Pemulihan lahan dan sekat kanal</option>
+                    <option value="10">Perlindungan zona ekonomi kritis</option>
+                </select>
+
+                <p class="note" style="margin-top:12px;">
+                    Besar penurunan risiko menggunakan asumsi
+                    demonstrasi, bukan efektivitas aktual.
+                </p>
+            </div>
+
+            <div class="sim" style="margin-top:16px;">
+                <div class="scenario">
+                    <strong>Indeks risiko dasar</strong>
+                    <div class="big">
+                        <span id="policyBase">92</span>/100
+                    </div>
+                    <div class="barline">
+                        <i id="policyBaseBar" style="--w:92%"></i>
+                    </div>
+                </div>
+
+                <div class="scenario">
+                    <strong>Risiko pada skenario</strong>
+                    <div class="big">
+                        <span id="policyResult">78</span>/100
+                    </div>
+                    <div class="barline">
+                        <i id="policyResultBar" style="--w:78%"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:16px;">
+                <h3>Ringkasan Perbandingan</h3>
+                <div class="list">
+                    <div class="row">
+                        <span>Wilayah</span>
+                        <b id="policyRegionLabel">Tanjung Jabung Barat</b>
+                    </div>
+                    <div class="row">
+                        <span>Deteksi hotspot 2025</span>
+                        <b id="policyHotspot">Memuat data...</b>
+                    </div>
+                    <div class="row">
+                        <span>Skenario dipilih</span>
+                        <b id="policyName">Patroli dan pencegahan dini</b>
+                    </div>
+                    <div class="row">
+                        <span>Perubahan indeks</span>
+                        <b id="policyReduction">-14 poin</b>
+                    </div>
+                    <div class="row">
+                        <span>Perubahan relatif (simulasi)</span>
+                        <b id="policyReductionPercent">—</b>
+                    </div>
+                    <div class="row">
+                        <span>Dampak ekonomi pada skenario</span>
+                        <b id="policySelectedImpact">—</b>
+                    </div>
+
+                    <div class="row">
+                        <span>Selisih ekonomi ilustratif</span>
+                        <b id="policySelectedSaving">—</b>
+                    </div>
+                </div>
+
+                <p id="policyAction"
+                    style="margin-top:12px;line-height:1.7;">
+                    Prioritaskan patroli dan pencegahan dini.
+                </p>
+            </div>
+
+            <div class="card" style="margin-top:16px;">
+    <h3>Perbandingan Semua Skenario</h3>
+
+    <p class="note">
+        Bandingkan hasil simulasi tiga alternatif intervensi
+        untuk wilayah yang sedang dipilih.
+    </p>
+
+    <div id="policyComparison"
+         style="
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+            gap:12px;
+            margin-top:16px;
+         ">
+    </div>
+</div>
+            
+            <p class="note" style="margin-top:16px;">
+                DATA SIMULASI — penurunan 10%, 15%, atau 20% adalah
+                asumsi ilustratif untuk demo. Angka ini belum
+                membuktikan efektivitas kebijakan di lapangan.
+            </p>
+        </section>
+    `;
+
+    const region = document.getElementById("policyRegion");
+    const scenario = document.getElementById("policyScenario");
+
+    function updatePolicy() {
+        const nama = region.value;
+        const dasar = risikoDasar[nama];
+        const dataHotspotPolicy = window.JDET_HOTSPOT_WILAYAH_2025;
+
+function normalisasiNamaPolicy(nama) {
+    const bersih = String(nama || "")
+        .toLowerCase()
+        .trim()
+        .replace(/^(kabupaten|kab\.|kota)\s+/i, "");
+
+    const alias = {
+        "tanjab barat": "tanjung jabung barat",
+        "tanjung jabung b": "tanjung jabung barat",
+        "tanjab timur": "tanjung jabung timur",
+        "tanjung jabung t": "tanjung jabung timur",
+        "batang hari": "batanghari",
+        "jambi": "kota jambi",
+        "sungai penuh": "kota sungai penuh"
+    };
+
+    return alias[bersih] || bersih;
+}
+
+let jumlahHotspotPolicy = null;
+
+if (dataHotspotPolicy) {
+    const target = normalisasiNamaPolicy(nama);
+
+    const cocok = Object.entries(dataHotspotPolicy).find(
+        ([namaCSV]) =>
+            normalisasiNamaPolicy(namaCSV) === target
+    );
+
+    if (cocok) {
+        jumlahHotspotPolicy = Number(cocok[1]);
+    }
+}
+
+const elemenHotspotPolicy =
+    document.getElementById("policyHotspot");
+
+if (elemenHotspotPolicy) {
+    elemenHotspotPolicy.textContent =
+        jumlahHotspotPolicy === null
+            ? "Data belum tersedia"
+            : jumlahHotspotPolicy.toLocaleString("id-ID") +
+              " catatan";
+}
+        const penurunan = Number(scenario.value);
+
+        const hasil = Math.max(
+            0,
+            Math.round(dasar * (1 - penurunan / 100))
+        );
+
+        const selisih = dasar - hasil;
+
+        const dampakDasarTerpilih = dampakEkonomiDasar[nama];
+
+const dampakSetelahSkenario = dasar > 0
+    ? dampakDasarTerpilih * hasil / dasar
+    : dampakDasarTerpilih;
+
+const selisihEkonomiIlustratif =
+    dampakDasarTerpilih - dampakSetelahSkenario;
+
+const formatRupiahSimulasi = nilai =>
+    "Rp " + nilai.toLocaleString("id-ID", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1
+    }) + " M";
+
+        const panelPerbandingan =
+    document.getElementById("policyComparison");
+
+if (panelPerbandingan) {
+    const semuaSkenario = [
+        {
+            nilai: 15,
+            nama: "Patroli dan pencegahan dini",
+            keterangan: "Pemantauan hotspot dan patroli"
+        },
+        {
+            nilai: 20,
+            nama: "Pemulihan lahan dan sekat kanal",
+            keterangan: "Restorasi sesuai kondisi hidrologis"
+        },
+        {
+            nilai: 10,
+            nama: "Perlindungan zona ekonomi kritis",
+            keterangan: "Perlindungan aktivitas ekonomi"
+        }
+    ];
+
+    panelPerbandingan.innerHTML = semuaSkenario.map(item => {
+        const risikoSimulasi = Math.max(
+            0,
+            Math.round(dasar * (1 - item.nilai / 100))
+        );
+
+        const selisihSimulasi = dasar - risikoSimulasi;
+
+        const dampakDasar = dampakEkonomiDasar[nama];
+
+const dampakSkenario =
+    dasar > 0
+        ? dampakDasar * (risikoSimulasi / dasar)
+        : dampakDasar;
+
+const penguranganDampak =
+    dampakDasar - dampakSkenario;
+
+const formatDampakSimulasi = nilai =>
+    "Rp " + nilai.toLocaleString("id-ID", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1
+    }) + " M";
+
+        const perubahanRelatif = dasar > 0
+            ? (selisihSimulasi / dasar * 100)
+                .toLocaleString("id-ID", {
+                    maximumFractionDigits: 1
+                })
+            : "0";
+
+        const sedangDipilih =
+            Number(scenario.value) === item.nilai;
+
+        return `
+            <div style="
+                padding:16px;
+                border:${sedangDipilih
+                    ? "2px solid #087f50"
+                    : "1px solid #d9e4d8"};
+                border-radius:14px;
+                background:${sedangDipilih
+                    ? "#eef7ef"
+                    : "#fffdf8"};
+            ">
+                <div style="
+                    font-size:11px;
+                    font-weight:800;
+                    color:#087f50;
+                    margin-bottom:8px;
+                ">
+                    ${sedangDipilih
+                        ? "✓ SKENARIO DIPILIH"
+                        : "ALTERNATIF PEMBANDING"}
+                </div>
+
+                <h4 style="margin:0 0 8px;">
+                    ${item.nama}
+                </h4>
+
+                <p class="note" style="margin:0 0 14px;">
+                    ${item.keterangan}
+                </p>
+
+                <div class="note">Indeks risiko dasar</div>
+                <div style="font-size:20px;font-weight:800;">
+                    ${dasar}/100
+                </div>
+
+                <div class="note" style="margin-top:10px;">
+                    Indeks pada skenario
+                </div>
+                <div style="
+                    font-size:26px;
+                    font-weight:900;
+                    color:#087f50;
+                ">
+                    ${risikoSimulasi}/100
+                </div>
+
+                <div class="barline">
+                    <i style="--w:${risikoSimulasi}%"></i>
+                </div>
+
+                <div style="margin-top:12px;font-size:12px;">
+                    Perubahan: <b>${selisihSimulasi} poin</b>
+                    (${perubahanRelatif}%)
+                </div>
+
+                <div class="note" style="margin-top:14px;">
+    Dampak ekonomi dasar (simulasi)
+    </div>
+
+    <div style="font-size:19px;font-weight:800;">
+    ${formatDampakSimulasi(dampakDasar)}
+    </div>
+
+    <div class="note" style="margin-top:10px;">
+    Dampak ekonomi pada skenario (simulasi)
+    </div>
+
+    <div style="font-size:19px;font-weight:800;color:#087f50;">
+    ${formatDampakSimulasi(dampakSkenario)}
+    </div>
+
+    <div class="note" style="margin-top:10px;">
+    Selisih ilustratif
+    </div>
+
+    <div style="font-weight:800;">
+    ${formatDampakSimulasi(penguranganDampak)}
+    </div>
+
+                <p class="note" style="margin-bottom:0;">
+                    Penurunan asumsi: ${item.nilai}%
+                </p>
+            </div>
+        `;
+    }).join("");
+}
+
+        const persentasePerubahan = dasar > 0
+    ? (selisih / dasar * 100)
+    : 0;
+
+        document.getElementById("policyBase").textContent = dasar;
+        document.getElementById("policyResult").textContent = hasil;
+
+        document.getElementById("policyBaseBar")
+            .style.setProperty("--w", dasar + "%");
+
+        document.getElementById("policyResultBar")
+            .style.setProperty("--w", hasil + "%");
+
+        document.getElementById("policyRegionLabel").textContent = nama;
+
+        document.getElementById("policyName").textContent =
+            scenario.options[scenario.selectedIndex].textContent;
+
+        document.getElementById("policyReduction").textContent =
+            "-" + selisih + " poin";
+
+        document.getElementById("policyReductionPercent").textContent =
+    persentasePerubahan.toLocaleString("id-ID", {
+        maximumFractionDigits: 1
+    }) + "%";
+
+document.getElementById("policySelectedImpact").textContent =
+    formatRupiahSimulasi(dampakSetelahSkenario);
+
+document.getElementById("policySelectedSaving").textContent =
+    formatRupiahSimulasi(selisihEkonomiIlustratif);
+
+        const tindakan = {
+            "15": "Fokus pada patroli, pemantauan hotspot, dan pencegahan dini.",
+            "20": "Evaluasi kesesuaian pemulihan lahan dan sekat kanal dengan kondisi wilayah.",
+            "10": "Identifikasi zona ekonomi penting dan perkuat kesiapsiagaan di sekitarnya."
+        };
+
+        document.getElementById("policyAction").textContent =
+            "Rekomendasi: " + tindakan[scenario.value] +
+            " Perubahan indeks ini merupakan hasil asumsi simulasi.";
+    }
+
+    region.addEventListener("change", updatePolicy);
+    scenario.addEventListener("change", updatePolicy);
+
+    updatePolicy();
+    fetch("./JDET_hotspot_Jambi_2025.csv")
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("CSV hotspot gagal dimuat.");
+        }
+        return response.text();
+    })
+    .then(teks => {
+        const baris = teks
+            .replace(/^\uFEFF/, "")
+            .trim()
+            .split(/\r?\n/);
+
+        const header = parseHotspotCSVRow(baris.shift())
+            .map(nama => nama.trim());
+
+        const indeksWilayah = header.indexOf("kabupaten_kota");
+
+        if (indeksWilayah < 0) {
+            throw new Error("Kolom kabupaten_kota tidak ditemukan.");
+        }
+
+        const hitung = {};
+
+        for (const barisData of baris) {
+            if (!barisData.trim()) continue;
+
+            const kolom = parseHotspotCSVRow(barisData);
+            const nama = (kolom[indeksWilayah] || "").trim();
+
+            if (nama) {
+                hitung[nama] = (hitung[nama] || 0) + 1;
+            }
+        }
+
+        hitung["Kota Sungai Penuh"] =
+            hitung["Kota Sungai Penuh"] || 0;
+
+        window.JDET_HOTSPOT_WILAYAH_2025 = hitung;
+        updatePolicy();
+    })
+    .catch(error => {
+        console.error("Gagal memuat data hotspot:", error);
+
+        const elemen = document.getElementById("policyHotspot");
+
+        if (elemen) {
+            elemen.textContent = "Gagal memuat data";
+        }
+    });
+}
+
+async function muatGrafikHotspotBulanan(namaWilayah) {
+    const grafik = document.getElementById("grafikHotspotBulanan");
+    if (!grafik) return;
+
+    grafik.textContent = "Memuat data hotspot bulanan...";
+
+    const bulanNama = [
+        "Januari", "Februari", "Maret", "April",
+        "Mei", "Juni", "Juli", "Agustus",
+        "September", "Oktober", "November", "Desember"
+    ];
+
+    const bulanSingkat = [
+        "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+        "Jul", "Agu", "Sep", "Okt", "Nov", "Des"
+    ];
+
+    function normalisasiWilayah(nama) {
+        const bersih = String(nama || "")
+            .toLowerCase()
+            .trim()
+            .replace(/^(kabupaten|kab\.|kota)\s+/i, "");
+
+        const alias = {
+            "tanjab barat": "tanjung jabung barat",
+            "tanjung jabung b": "tanjung jabung barat",
+            "tanjab timur": "tanjung jabung timur",
+            "tanjung jabung t": "tanjung jabung timur",
+            "batang hari": "batanghari",
+            "jambi": "kota jambi",
+            "sungai penuh": "kota sungai penuh"
+        };
+
+        return alias[bersih] || bersih;
+    }
+
+    try {
+        const respons = await fetch("./JDET_hotspot_Jambi_2025.csv");
+
+        if (!respons.ok) {
+            throw new Error("CSV hotspot tidak ditemukan.");
+        }
+
+        const teks = (await respons.text())
+            .replace(/^\uFEFF/, "")
+            .trim();
+
+        const baris = teks.split(/\r?\n/);
+        const header = parseHotspotCSVRow(baris.shift())
+            .map(nama => nama.trim());
+
+        const indeksWilayah = header.indexOf("kabupaten_kota");
+        const indeksTanggal = header.indexOf("acq_date");
+
+        if (indeksWilayah < 0 || indeksTanggal < 0) {
+            throw new Error("Kolom wilayah atau tanggal tidak ditemukan.");
+        }
+
+        const target = normalisasiWilayah(namaWilayah);
+        const jumlahBulanan = Array(12).fill(0);
+        let jumlahBarisCocok = 0;
+
+        for (const barisData of baris) {
+            if (!barisData.trim()) continue;
+
+            const kolom = parseHotspotCSVRow(barisData);
+            const namaCSV = normalisasiWilayah(kolom[indeksWilayah]);
+
+            if (namaCSV !== target) continue;
+
+            const tanggal = (kolom[indeksTanggal] || "").trim();
+            const cocokTanggal = tanggal.match(
+                /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/
+            );
+
+            if (!cocokTanggal || Number(cocokTanggal[1]) !== 2025) {
+                continue;
+            }
+
+            const bulan = Number(cocokTanggal[2]) - 1;
+
+            if (bulan < 0 || bulan > 11) continue;
+
+            jumlahBulanan[bulan]++;
+            jumlahBarisCocok++;
+        }
+
+        if (jumlahBarisCocok === 0 &&
+            target !== normalisasiWilayah("Kota Sungai Penuh")) {
+            grafik.textContent =
+                "Belum ditemukan catatan yang cocok untuk wilayah ini.";
+            return;
+        }
+
+        const maksimum = Math.max(...jumlahBulanan, 1);
+const totalTahunan = jumlahBulanan.reduce(
+    (total, jumlah) => total + jumlah,
+    0
+);
+
+const indeksPuncak = jumlahBulanan.indexOf(
+    Math.max(...jumlahBulanan)
+);
+
+const rataRata = (totalTahunan / 12).toLocaleString("id-ID", {
+    maximumFractionDigits: 1
+});
+
+const konsentrasiPuncak = totalTahunan > 0
+    ? Math.round(
+        jumlahBulanan[indeksPuncak] / totalTahunan * 100
+      )
+    : 0;
+
+const ringkasanPola = totalTahunan === 0
+    ? "Tidak ada catatan deteksi satelit dalam dataset untuk tahun ini."
+    : konsentrasiPuncak >= 40
+        ? `${konsentrasiPuncak}% catatan deteksi tahunan terkumpul pada bulan puncak, yaitu ${bulanNama[indeksPuncak]}. Deteksi pada tahun ini relatif terkonsentrasi pada bulan tersebut.`
+        : `${konsentrasiPuncak}% catatan deteksi tahunan tercatat pada bulan puncak, yaitu ${bulanNama[indeksPuncak]}. Periksa distribusi bulan lainnya untuk memahami pola tahunan.`;
+
+grafik.innerHTML = `
+    <div style="
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+        gap:10px;
+        margin-bottom:18px;
+    ">
+        <div style="
+            background:#eef7ef;
+            border:1px solid #d9e4d8;
+            border-radius:12px;
+            padding:14px;
+        ">
+            <div class="note">Total deteksi wilayah 2025</div>
+            <div style="font-size:25px;font-weight:800;color:#087f50">
+                ${totalTahunan.toLocaleString("id-ID")}
+            </div>
+            <div class="note">Catatan satelit</div>
+        </div>
+
+        <div style="
+            background:#fff8e7;
+            border:1px solid #f0dfb0;
+            border-radius:12px;
+            padding:14px;
+        ">
+            <div class="note">Bulan puncak</div>
+            <div style="font-size:22px;font-weight:800;color:#9a6a00">
+                ${totalTahunan === 0 ? "—" : bulanNama[indeksPuncak]}
+            </div>
+            <div class="note">
+                ${totalTahunan === 0
+                    ? "Belum ada deteksi tercatat"
+                    : jumlahBulanan[indeksPuncak].toLocaleString("id-ID") +
+                      " deteksi"}
+            </div>
+        </div>
+
+        <div style="
+            background:#f2f5fa;
+            border:1px solid #dce4ef;
+            border-radius:12px;
+            padding:14px;
+        ">
+            <div class="note">Rata-rata bulanan</div>
+            <div style="font-size:25px;font-weight:800;color:#315d88">
+                ${rataRata}
+            </div>
+            <div class="note">Deteksi per bulan</div>
+        </div>
+        <div style="
+    background:#fff4ed;
+    border:1px solid #f0d7c7;
+    border-radius:12px;
+    padding:14px;
+">
+    <div class="note">Konsentrasi bulan puncak</div>
+    <div style="font-size:25px;font-weight:800;color:#a65325">
+        ${konsentrasiPuncak}%
+    </div>
+    <div class="note">
+        Proporsi deteksi pada bulan tertinggi
+    </div>
+</div>
+    </div>
+
+    <div style="
+        display:grid;
+        grid-template-columns:repeat(6,minmax(0,1fr));
+        gap:12px;
+        align-items:end;
+    ">
+        ${jumlahBulanan.map((jumlah, i) => {
+            const tinggi = jumlah === 0
+                ? 3
+                : Math.max(8, jumlah / maksimum * 120);
+
+            const bulanPuncak =
+                totalTahunan > 0 && i === indeksPuncak;
+
+            return `
+                <div style="min-width:0;text-align:center;">
+                    <div style="
+                        height:130px;
+                        display:flex;
+                        align-items:flex-end;
+                        justify-content:center;
+                        background:${bulanPuncak ? "#fff4d5" : "#eef7ef"};
+                        border-radius:9px 9px 0 0;
+                        padding:5px;
+                    ">
+                        <div title="${jumlah} deteksi"
+                            style="
+                                width:72%;
+                                height:${tinggi}px;
+                                background:${bulanPuncak ? "#d9a52e" : "#087f50"};
+                                border-radius:5px 5px 0 0;
+                                transition:height .25s ease;
+                            ">
+                        </div>
+                    </div>
+
+                    <div style="
+                        font-size:12px;
+                        font-weight:800;
+                        margin-top:7px;
+                    ">${bulanSingkat[i]}</div>
+
+                    <div style="
+                        font-size:11px;
+                        color:#66786e;
+                        margin-top:2px;
+                    ">${jumlah.toLocaleString("id-ID")}</div>
+                </div>
+            `;
+        }).join("")}
+    </div>
+
+    <p class="note" style="margin-top:14px;">
+        Batang emas menandai bulan dengan deteksi terbanyak.
+        Data merupakan catatan deteksi satelit, bukan jumlah
+        kejadian kebakaran yang telah terkonfirmasi.
+    </p>
+
+    <p class="note" style="
+    margin-top:10px;
+    padding:12px;
+    background:#eef7ef;
+    border-radius:10px;
+">
+    <b>Interpretasi pola:</b> ${ringkasanPola}
+    </p>
+
+    <p class="note" style="
+    margin-top:12px;
+    padding-top:10px;
+    border-top:1px solid #d9e4d8;
+">
+    <b>Sumber data:</b> NASA FIRMS, deteksi satelit VIIRS S-NPP
+    periode Januari–Desember 2025 yang diproses berdasarkan
+    batas wilayah Provinsi Jambi.
+    <br><br>
+    <b>Batasan:</b> Deteksi satelit bukan jumlah kejadian
+    kebakaran terkonfirmasi. Skor risiko dan dampak ekonomi
+    J-DET masih berupa simulasi yang memerlukan validasi data aktual.
+</p>
+
+`;
+    } catch (error) {
+        console.error("Grafik hotspot gagal dimuat:", error);
+        grafik.textContent = "Grafik gagal dimuat: " + error.message;
+    }
+}    
+
+function showRegion(region) {
+        
+const SKOR_RISIKO_JDET = {
+    "Tanjab Barat": 92,
+    "Muaro Jambi": 81,
+    "Tanjab Timur": 76,
+    "Batanghari": 59,
+    "Kota Jambi": 21,
+    "Kerinci": 47,
+    "Merangin": 54,
+    "Sarolangun": 63,
+    "Tebo": 67,
+    "Bungo": 51,
+    "Kota Sungai Penuh": 18
+};
+
+    const data = {
+        "Tanjab Barat": {
+            risk: SKOR_RISIKO_JDET["Tanjab Barat"] + "%",
+            impact: "Rp 12,4 M",
+            sector: "Perkebunan",
+            action: "Prioritaskan pemantauan hotspot dan pencegahan dini."
+        },
+        "Muaro Jambi": {
+            risk: SKOR_RISIKO_JDET["Muaro Jambi"] + "%",
+            impact: "Rp 9,8 M",
+            sector: "Pertanian",
+            action: "Perkuat patroli dan pemantauan kondisi lahan."
+        },
+        "Tanjab Timur": {
+            risk: SKOR_RISIKO_JDET["Tanjab Timur"] + "%",
+            impact: "Rp 8,7 M",
+            sector: "Perkebunan",
+            action: "Prioritaskan deteksi dini dan perlindungan zona ekonomi."
+        },
+        "Batanghari": {
+            risk: SKOR_RISIKO_JDET["Batanghari"] + "%",
+            impact: "Rp 6,2 M",
+            sector: "Pertanian",
+            action: "Lakukan pemantauan berkala pada wilayah rawan."
+        },
+        "Kota Jambi": {
+            risk: SKOR_RISIKO_JDET["Kota Jambi"] + "%",
+            impact: "Rp 2,1 M",
+            sector: "Jasa & perdagangan",
+            action: "Fokus pada kesiapsiagaan dan perlindungan aktivitas ekonomi."
+        },
+        "Kerinci": {
+            risk: SKOR_RISIKO_JDET["Kerinci"] + "%",
+            impact: "Rp 4,8 M",
+            sector: "Pertanian & perkebunan",
+            action: "Perkuat pemantauan lahan dan kesiapsiagaan pada wilayah rawan."
+        },
+        "Merangin": {
+            risk: SKOR_RISIKO_JDET["Merangin"] + "%",
+            impact: "Rp 5,6 M",
+            sector: "Pertanian",
+            action: "Tingkatkan pemantauan kondisi lahan dan pencegahan dini."
+        },
+        "Sarolangun": {
+            risk: SKOR_RISIKO_JDET["Sarolangun"] + "%",
+            impact: "Rp 6,9 M",
+            sector: "Perkebunan",
+            action: "Prioritaskan patroli dan deteksi dini pada zona perkebunan."
+        },
+        "Tebo": {
+            risk: SKOR_RISIKO_JDET["Tebo"] + "%",
+            impact: "Rp 7,4 M",
+            sector: "Perkebunan",
+            action: "Perkuat pengawasan hotspot dan perlindungan kawasan ekonomi."
+        },
+        "Bungo": {
+            risk: SKOR_RISIKO_JDET["Bungo"] + "%",
+            impact: "Rp 5,3 M",
+            sector: "Pertanian & perkebunan",
+            action: "Lakukan pemantauan berkala dan pencegahan kebakaran."
+        },
+        "Kota Sungai Penuh": {
+            risk: SKOR_RISIKO_JDET["Kota Sungai Penuh"] + "%",
+            impact: "Rp 1,7 M",
+            sector: "Jasa & perdagangan",
+            action: "Fokus pada kesiapsiagaan dan perlindungan aktivitas ekonomi."
+        }
+        
+    };
+    
+    // Samakan format nama wilayah dari GeoJSON
+    const normalisasi = {
+        "Tanjung Jabung B": "Tanjab Barat",
+        "Tanjung Jabung Barat": "Tanjab Barat",
+        "Tanjung Jabung T": "Tanjab Timur",
+        "Tanjung Jabung Timur": "Tanjab Timur",
+        "Batang Hari": "Batanghari",
+        "Jambi": "Kota Jambi",
+        "Sungai Penuh": "Kota Sungai Penuh"
+    };
+
+    const namaAsli = String(region).trim();
+    const namaKunci = normalisasi[namaAsli] || namaAsli;
+    const info = data[namaKunci];
+
+    const panel = document.getElementById("regionInfo");
+
+    if (!info) {
+        console.warn("Data wilayah belum tersedia:", namaAsli);
+
+        if (panel) {
+            panel.innerHTML = `
+                <h3>${namaAsli}</h3>
+                <p>Data analisis untuk wilayah ini belum tersedia.</p>
+            `;
+        }
+        return;
+    }
+
+    
+if (panel) {
+    const skor = parseInt(info.risk, 10);
+
+    const prioritas =
+        skor >= 80 ? "PRIORITAS 1 — Intervensi segera" :
+        skor >= 60 ? "PRIORITAS 2 — Intervensi tinggi" :
+        skor >= 40 ? "PRIORITAS 3 — Pemantauan" :
+                     "PRIORITAS 4 — Kesiapsiagaan";
+
+    const kelasPrioritas =
+        skor >= 80 ? "priority-1" :
+        skor >= 60 ? "priority-2" :
+        skor >= 40 ? "priority-3" :
+                     "priority-4";
+
+    
+const mode = document.getElementById("dimensiRisiko")?.value || "gabungan";
+
+const detailPrioritas = {
+    gabungan: {
+        judul: "Faktor Risiko Gabungan",
+        faktor: [
+            "Riwayat hotspot dan kejadian kebakaran.",
+            "Cuaca, curah hujan, dan tingkat kekeringan.",
+            "Jenis tanah, kondisi gambut, dan kelembapan lahan.",
+            "Produksi pertanian dan aktivitas ekonomi yang terpapar."
+        ]
+    },
+    cuaca: {
+        judul: "Faktor Cuaca yang Perlu Diperiksa",
+        faktor: [
+            "Curah hujan terbaru dan lamanya periode kering.",
+            "Suhu dan kelembapan udara.",
+            "Kecepatan serta arah angin untuk menilai kondisi penyebaran api.",
+            "Riwayat hotspot pada periode cuaca serupa."
+        ]
+    },
+    lahan: {
+        judul: "Faktor Kerentanan Lahan",
+        faktor: [
+            "Jenis tanah dan sebaran lahan gambut.",
+            "Tutupan serta penggunaan lahan.",
+            "Kelembapan tanah dan kondisi hidrologi.",
+            "Riwayat kebakaran dan kerusakan lahan."
+        ]
+    },
+    ekonomi: {
+        judul: "Faktor Paparan Ekonomi dan Pangan",
+        faktor: [
+            "Luas lahan pertanian dan perkebunan yang terpapar.",
+            "Jenis komoditas serta nilai produksinya.",
+            "Ketergantungan mata pencaharian pada sektor terkait.",
+            "Akses distribusi hasil panen dan pasar."
+        ]
+    }
+};
+
+const faktorHTML = detailPrioritas[mode].faktor
+    .map(faktor => `<li>${faktor}</li>`)
+    .join("");
+
+    
+const jumlahHotspotWilayah = (() => {
+    const dataHotspot = window.JDET_HOTSPOT_WILAYAH_2025;
+
+    if (!dataHotspot) return null;
+
+    function normalisasiNama(nama) {
+        const bersih = String(nama || "")
+            .toLowerCase()
+            .trim()
+            .replace(/^(kabupaten|kab\.?|kota)\s+/, "");
+
+        const alias = {
+            "tanjab barat": "tanjung jabung barat",
+            "tanjab timur": "tanjung jabung timur"
+        };
+
+        return alias[bersih] || bersih;
+    }
+
+    const target = normalisasiNama(namaKunci);
+
+    const cocok = Object.entries(dataHotspot).find(
+        ([nama]) => normalisasiNama(nama) === target
+    );
+
+    if (cocok) return Number(cocok[1]);
+
+if (target === "sungai penuh") return 0;
+
+return null;
+})();
+
+const dataHotspotSemua = window.JDET_HOTSPOT_WILAYAH_2025;
+
+const totalWilayahHotspot = dataHotspotSemua
+    ? Object.keys(dataHotspotSemua).length
+    : 0;
+
+const entriHotspotTerbanyak = dataHotspotSemua
+    ? Object.entries(dataHotspotSemua)
+        .sort((a, b) => Number(b[1]) - Number(a[1]))[0]
+    : null;
+
+const jumlahMaksimumHotspot = entriHotspotTerbanyak
+    ? Number(entriHotspotTerbanyak[1])
+    : 0;
+
+const namaWilayahHotspotTerbanyak = entriHotspotTerbanyak
+    ? entriHotspotTerbanyak[0]
+    : null;
+
+const indeksHotspotRelatif =
+    jumlahHotspotWilayah === null || jumlahMaksimumHotspot === 0
+        ? null
+        : Math.round(
+            Number(jumlahHotspotWilayah) /
+            jumlahMaksimumHotspot * 100
+        );
+
+const peringkatHotspotWilayah =
+    jumlahHotspotWilayah === null || !dataHotspotSemua
+        ? null
+        : Object.values(dataHotspotSemua)
+            .filter(jumlah =>
+                Number(jumlah) > Number(jumlahHotspotWilayah)
+            ).length + 1;
+   
+const kategoriHotspotRelatif =
+    jumlahHotspotWilayah === null
+        ? "DATA BELUM TERSEDIA"
+        : indeksHotspotRelatif >= 80
+            ? "RELATIF TINGGI"
+            : indeksHotspotRelatif >= 50
+                ? "RELATIF MENENGAH"
+                : "RELATIF RENDAH";   
+
+                const rekomendasiHotspot =
+    jumlahHotspotWilayah === null
+        ? "Data hotspot belum tersedia. Periksa sumber data dan lakukan verifikasi lapangan."
+        : Number(jumlahHotspotWilayah) === 0
+            ? "Tidak ada deteksi satelit yang tercatat dalam dataset 2025 untuk wilayah ini. Pemantauan rutin tetap diperlukan dan kondisi lapangan perlu diverifikasi."
+            : indeksHotspotRelatif >= 80
+                ? "Riwayat deteksi relatif tinggi dibandingkan wilayah dengan deteksi terbanyak. Prioritaskan pemeriksaan tren hotspot, cuaca, dan kondisi lahan."
+                : indeksHotspotRelatif >= 50
+                    ? "Riwayat deteksi relatif menengah. Lakukan pemantauan berkala, terutama ketika kondisi cuaca mendukung terjadinya kebakaran."
+                    : "Jumlah deteksi historis relatif lebih rendah. Pemantauan tetap diperlukan karena jumlah deteksi saja tidak cukup untuk menentukan tingkat risiko kebakaran.";
+           
+            const catatanMode = mode === "gabungan"
+    ? "Skor di atas merupakan indeks risiko simulasi gabungan."
+    : "Mode ini menampilkan faktor yang perlu diperiksa. " +
+      "Skor di atas masih menggunakan simulasi gabungan dan " +
+      "belum dihitung ulang berdasarkan data aktual khusus " +
+      "untuk mode yang dipilih.";
+
+
+
+    panel.innerHTML = `
+        <h3>Analisis ${namaKunci}</h3>
+
+        <p><b>Risiko kebakaran:</b> ${info.risk}</p>
+        <p><b>Perkiraan dampak ekonomi:</b> ${info.impact}</p>
+        <p><b>Sektor terdampak:</b> ${info.sector}</p>
+
+        
+<p>
+    <b>Catatan deteksi hotspot 2025:</b>
+    ${jumlahHotspotWilayah === null
+        ? "Data belum tersedia"
+        : jumlahHotspotWilayah.toLocaleString("id-ID") + " catatan"}
+</p>
+
+<p class="note">
+    Catatan deteksi satelit historis, bukan jumlah kejadian
+    kebakaran yang terkonfirmasi atau skor risiko.
+</p>
+
+<h4>📅 Tren Deteksi Hotspot Bulanan 2025</h4>
+
+<div id="grafikHotspotBulanan"
+     style="margin:12px 0 20px;">
+    Grafik hotspot bulanan akan ditampilkan di sini.
+</div>
+
+<p>
+    <b>Peringkat deteksi hotspot 2025:</b>
+    ${jumlahHotspotWilayah === null
+    ? "Data belum tersedia"
+    : Number(jumlahHotspotWilayah) === 0
+        ? "Tidak ada deteksi tercatat; tidak masuk peringkat"
+        : peringkatHotspotWilayah + " dari " +
+          totalWilayahHotspot + " wilayah dengan catatan deteksi"}
+</p>
+
+<p>
+    <b>Indeks deteksi relatif:</b>
+    ${indeksHotspotRelatif === null
+        ? "Data belum tersedia"
+        : indeksHotspotRelatif + "% dari deteksi tertinggi (" +
+          namaWilayahHotspotTerbanyak + ")"}
+</p>
+
+<div style="
+    height:10px;
+    background:#eef7ef;
+    border-radius:99px;
+    overflow:hidden;
+    margin:8px 0 14px;
+">
+    <div style="
+        height:100%;
+        width:${indeksHotspotRelatif === null ? 0 : indeksHotspotRelatif}%;
+        background:linear-gradient(90deg,#087f50,#e4b64f);
+        border-radius:99px;
+        transition:width .3s ease;
+    "></div>
+</div>
+
+<p class="note">
+    Indeks membandingkan jumlah deteksi historis tahun 2025
+    dengan wilayah yang memiliki deteksi terbanyak.
+    Indeks ini bukan probabilitas kebakaran.
+</p>
+        
+            <div class="priority-box ${kelasPrioritas}">
+            <b>${prioritas}</b>
+        </div>
+
+        <div class="risk-explanation"
+            style="margin:14px 0;padding:15px;
+            background:#f3f8f4;border:1px solid #d9e4d8;
+            border-radius:12px;">
+
+            <h4>📊 Mengapa Wilayah Ini Masuk Prioritas?</h4>
+            <p class="simulation-note">${catatanMode}</p>
+
+            <p style="font-size:13px;line-height:1.7;">
+                Skor simulasi ${skor}/100 masuk kategori
+                ${prioritas}. Kategori ini ditentukan berdasarkan
+                ambang skor prototype, bukan hasil pengukuran
+                risiko aktual.
+            </p>
+
+            
+            <h4>🔎 ${detailPrioritas[mode].judul}</h4>
+
+
+            <ul style="font-size:13px;line-height:1.8;padding-left:20px;">
+                ${faktorHTML}
+            </ul>
+
+            <p class="simulation-note">
+                Faktor di atas perlu diverifikasi dengan data yang
+                sesuai dan belum tentu seluruhnya telah dihitung
+                dalam skor risiko saat ini.
+            </p>
+        </div>
+
+        <h4>🔥 Interpretasi Riwayat Hotspot 2025</h4>
+
+        <p>
+    <b>Kategori deteksi relatif:</b>
+    ${kategoriHotspotRelatif}
+</p>
+
+<p>${rekomendasiHotspot}</p>
+
+<p class="note">
+    Interpretasi ini didasarkan pada jumlah deteksi historis,
+    bukan prediksi atau kepastian terjadinya kebakaran.
+</p>
+        
+        <h4>Rekomendasi J-DET</h4>
+        <p>${info.action}</p>
+
+        <p class="note">
+            DATA SIMULASI — bukan hasil pengukuran aktual.
+        </p>
+    `;
+    muatGrafikHotspotBulanan(namaKunci);
+}
+
+
+
+}
+const jambiMap = L.map('jambiMap', {
+    zoomControl: true,
+    scrollWheelZoom: false
+});
+
+fetch('./jambi.geojson')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('File jambi.geojson tidak ditemukan');
+        }
+        return response.json();
+    })
+    .then(data => {
+        const wilayahLayer = L.geoJSON(data, {
+            style: function (feature) {
+    const nama =
+        feature.properties.NAME_2 ||
+        feature.properties.WADMKK ||
+        feature.properties.NAMOBJ ||
+        'Wilayah Jambi';
+
+    const skorRisiko = {
+    'Batang Hari': 59,
+    'Bungo': 42,
+    'Jambi': 21,
+    'Kerinci': 35,
+    'Merangin': 46,
+    'Muaro Jambi': 81,
+    'Sarolangun': 55,
+    'Sungai Penuh': 30,
+    'Tanjung Jabung B': 92,
+    'Tanjung Jabung T': 76,
+    'Tebo': 48
+
+    };
+
+    const skor = skorRisiko[nama] ?? 50;
+
+    return {
+        color: '#ffffff',
+        weight: 2,
+        fillColor:
+            skor >= 80 ? '#df6258' :
+            skor >= 50 ? '#e7a63a' :
+            '#087f50',
+        fillOpacity: 0.75
+    };
+},
+            
+onEachFeature: function (feature, layer) {
+    const nama =
+        feature.properties.NAME_2 ||
+        feature.properties.WADMKK ||
+        feature.properties.NAMOBJ ||
+        'Wilayah Jambi';
+       
+const skorRisiko = {
+    'Batang Hari': 59,
+    'Bungo': 42,
+    'Jambi': 21,
+    'Kerinci': 35,
+    'Merangin': 46,
+    'Muaro Jambi': 81,
+    'Sarolangun': 55,
+    'Sungai Penuh': 30,
+    'Tanjung Jabung B': 92,
+    'Tanjung Jabung T': 76,
+    'Tebo': 48
+};
+
+const skor = skorRisiko[nama] ?? 50;
+
+const warnaRisiko =
+    skor >= 80 ? '#df6258' :
+    skor >= 50 ? '#e7a63a' :
+    '#087f50';
+
+    layer.bindTooltip(nama);
+    console.log('Nama wilayah:', nama);
+    
+const kategori =
+    skor >= 80 ? 'Tinggi' :
+    skor >= 50 ? 'Sedang' : 'Rendah';
+
+const rekomendasi =
+    skor >= 80
+        ? 'Prioritaskan pemantauan dan kesiapsiagaan tim.'
+        : skor >= 50
+        ? 'Tingkatkan pemantauan dan lakukan pencegahan dini.'
+        : 'Pertahankan pemantauan rutin dan kesiapsiagaan.';
+
+layer.bindPopup(
+    '<div style="min-width:210px">' +
+        '<h3 style="margin:0 0 8px">' + nama + '</h3>' +
+        '<p><b>Skor risiko simulasi:</b> ' + skor + '/100</p>' +
+        '<p><b>Kategori:</b> ' + kategori + '</p>' +
+        '<hr>' +
+        '<p><b>Rekomendasi:</b></p>' +
+        '<p>' + rekomendasi + '</p>' +
+        '<small>Angka simulasi, bukan data aktual.</small>' +
+    '</div>'
+);
+
+    layer.on('mouseover', function () {
+        layer.setStyle({
+            fillColor: '#e4b64f',
+            fillOpacity: 0.95,
+            color: '#ffffff',
+            weight: 4
+        });
+    });
+
+    layer.on('mouseout', function () {
+        wilayahLayer.resetStyle(layer);
+    });
+
+    layer.on('click', function () {
+        layer.setStyle({
+            fillColor: '#e4b64f',
+            fillOpacity: 1,
+            color: '#10261d',
+            weight: 4
+        });
+
+        if (typeof showRegion === 'function') {
+            showRegion(nama);
+        }
+    });
+}
+        }).addTo(jambiMap);
+
+        jambiMap.invalidateSize();
+        jambiMap.fitBounds(wilayahLayer.getBounds());
+    })
+    .catch(error => {
+        console.error('Gagal memuat peta Jambi:', error);
+    });
+
+    
+function parseHotspotCSVRow(line) {
+    const hasil = [];
+    let nilai = "";
+    let dalamKutip = false;
+
+    for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+
+        if (c === '"') {
+            if (dalamKutip && line[i + 1] === '"') {
+                nilai += '"';
+                i++;
+            } else {
+                dalamKutip = !dalamKutip;
+            }
+        } else if (c === "," && !dalamKutip) {
+            hasil.push(nilai);
+            nilai = "";
+        } else {
+            nilai += c;
+        }
+    }
+
+    hasil.push(nilai);
+    return hasil;
+}
+
+async function muatTopHotspotCSV() {
+   const status = document.getElementById("hotspotRankingStatus");
+const daftar = document.getElementById("hotspotRankingRows");
+
+console.log("HOTSPOT LOADER DIPANGGIL", {
+    statusDitemukan: !!status,
+    daftarDitemukan: !!daftar
+});
+
+if (!status || !daftar) {
+    console.warn("Panel peringkat hotspot tidak ditemukan.");
+    return;
+}
+
+status.textContent = "Pembaca CSV aktif, sedang memuat data...";
+
+    try {
+        const response = await fetch("./JDET_hotspot_Jambi_2025.csv");
+
+        if (!response.ok) {
+            throw new Error("File CSV tidak ditemukan.");
+        }
+
+        const teks = (await response.text())
+            .replace(/^\uFEFF/, "")
+            .trim();
+
+        const baris = teks.split(/\r?\n/);
+
+        if (baris.length < 2) {
+            throw new Error("CSV tidak memiliki data.");
+        }
+
+        const header = parseHotspotCSVRow(baris.shift())
+            .map(x => x.trim());
+
+        const indeksWilayah = header.indexOf("kabupaten_kota");
+
+        if (indeksWilayah < 0) {
+            throw new Error(
+                "Kolom kabupaten_kota tidak ditemukan. " +
+                "Pastikan CSV yang dipilih adalah data khusus Jambi."
+            );
+        }
+
+        const hitung = {};
+
+        for (const barisData of baris) {
+            if (!barisData.trim()) continue;
+
+            const kolom = parseHotspotCSVRow(barisData);
+            const nama = (kolom[indeksWilayah] || "").trim();
+
+            if (nama) {
+                hitung[nama] = (hitung[nama] || 0) + 1;
+            }
+        }
+
+        const ranking = Object.entries(hitung)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+
+        if (ranking.length === 0) {
+            throw new Error("Tidak ada wilayah untuk ditampilkan.");
+        }
+
+        const maksimum = ranking[0][1];
+
+        daftar.innerHTML = ranking.map(([nama, jumlah], i) => `
+            <div class="priority">
+                <span>
+                    ${i + 1}. ${nama} — ${jumlah.toLocaleString("id-ID")}
+                </span>
+                <div class="bar">
+                    <span style="width:${jumlah / maksimum * 100}%"></span>
+                </div>
+            </div>
+        `).join("");
+
+        const total = Object.values(hitung)
+            .reduce((jumlah, nilai) => jumlah + nilai, 0);
+
+        status.textContent =
+            `Berhasil menghitung ${total.toLocaleString("id-ID")} ` +
+            `catatan deteksi dari ${Object.keys(hitung).length} wilayah ` +
+            `berdasarkan CSV.`;
+
+    } catch (error) {
+        console.error("Gagal memuat peringkat hotspot:", error);
+        status.textContent = "Peringkat gagal dimuat: " + error.message;
+    }
+}
+    
+function switchTab(button, action) {
+    document.querySelectorAll('nav button').forEach(tab => {
+        tab.classList.remove('active');
+    });
+
+    button.classList.add('active');
+    action();
+}
+
+    setTimeout(() => {
+        const status = document.getElementById("hotspotRankingStatus");
+        const daftar = document.getElementById("hotspotRankingRows");
+
+        if (status && daftar) {
+            muatTopHotspotCSV();
+        }
+    }, 150);
+
+
+
+</script>
+
+</body>
+</html>
