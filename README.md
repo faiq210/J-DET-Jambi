@@ -43,8 +43,9 @@ Berkas utama:
 
 ## Sumber Data
 
-Data hotspot diolah dari berkas CSV proyek. Keterangan sumber asli, produk satelit, periode pengamatan, tanggal unduh, dan metode pengolahan perlu dicantumkan berdasarkan metadata dataset yang digunakan.
+Data hotspot pada berkas `JDET_hotspot_Jambi_2025.csv` merupakan data yang diolah untuk analisis deteksi satelit tahun 2025 di Provinsi Jambi. Pengolahan menggunakan tanggal deteksi (`acq_date`) dan nama kabupaten/kota (`kabupaten_kota`) untuk menghitung jumlah catatan per wilayah serta distribusinya setiap bulan. Kolom satelit, instrumen, tingkat kepercayaan deteksi, dan daya radiasi api (`frp`) tersedia sebagai atribut pendukung dalam dataset.
 
+Sumber data asli, produk satelit yang digunakan, tautan unduhan, dan tanggal pengambilan data perlu dicantumkan sesuai metadata dataset sumber. Jumlah yang ditampilkan J-DET merupakan jumlah catatan deteksi satelit, bukan jumlah kejadian kebakaran terkonfirmasi.
 ## Batasan dan Validasi
 
 J-DET masih merupakan prototipe demonstrasi. Skor risiko, indeks dampak ekonomi, serta besaran perubahan dalam simulasi kebijakan belum tervalidasi sebagai hasil pengukuran aktual.
